@@ -1,6 +1,7 @@
 use hayagriva::{
     archive::ArchivedStyle, citationberg, io::from_biblatex_str, BibliographyDriver,
-    BibliographyRequest, CitationItem, CitationRequest, CitePurpose, ElemChildren,
+    BibliographyRequest, CitationItem, CitationRequest, CitePurpose, ElemChild, ElemChildren,
+    Formatted, Formatting,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_minimal_protocol::wasm_func;
@@ -14,9 +15,63 @@ use util::*;
 #[cfg(target_arch = "wasm32")]
 wasm_minimal_protocol::initiate_protocol!();
 
-fn render(content: &ElemChildren) -> String {
-    // TODO
-    content.to_string()
+#[derive(Default, Debug, Clone, PartialEq, Eq, Hash)]
+struct Renderer(String);
+
+impl Renderer {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn get(self) -> String {
+        self.0
+    }
+
+    pub fn render_children(self, content: &ElemChildren) -> Self {
+        let mut out = self;
+        for child in content.0.iter() {
+            out = out.render_child(child);
+        }
+        out
+    }
+
+    pub fn render_child(self, content: &ElemChild) -> Self {
+        let mut out = self;
+        match content {
+            ElemChild::Text(text) => {
+                out = out.format(text, true);
+            }
+            ElemChild::Elem(elem) => {
+                out = out.render_children(&elem.children);
+            }
+            ElemChild::Markup(markup) => {
+                out.0.push_str("$");
+                out.0.push_str(markup);
+                out.0.push_str("$");
+            }
+            ElemChild::Link { text, url } => {
+                out.0.push_str("#link(\"");
+                out.0.push_str(url);
+                out.0.push_str("\")[");
+                out = out.format(text, false);
+                out.0.push_str("]");
+            }
+            ElemChild::Transparent { cite_idx, format } => {
+                todo!();
+            }
+        }
+        out
+    }
+
+    fn format(mut self, content: &Formatted, trim_start: bool) -> Self {
+        let text = if trim_start {
+            content.text.trim_start()
+        } else {
+            content.text.as_str()
+        };
+        self.0.push_str(text);
+        self
+    }
 }
 
 #[cfg_attr(target_arch = "wasm32", wasm_func)]
@@ -73,13 +128,18 @@ pub fn read_biblatex(config: &[u8]) -> Result<Vec<u8>, String> {
         .zip(citations)
         .map(|(reference, citations)| {
             let key = reference.key;
-            let prefix = reference.first_field.as_ref().map(|f| f.to_string());
-            let reference = render(&reference.content);
+            let prefix = reference
+                .first_field
+                .as_ref()
+                .map(|f| Renderer::new().render_child(f).get());
+            let reference = Renderer::new().render_children(&reference.content).get();
 
             let forms = ["normal", "prose", "full", "author", "year"]
                 .iter()
                 .map(ToString::to_string);
-            let items = citations.iter().map(|item| render(&item.citation));
+            let items = citations
+                .iter()
+                .map(|item| Renderer::new().render_children(&item.citation).get());
             let citations = forms.zip(items).collect();
             Entry {
                 key,

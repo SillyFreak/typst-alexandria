@@ -104,12 +104,14 @@
       // stroke: (:),
       // inset: (:),
       ..for e in bib {
+        let render = eval.with(mode: "markup")
+        let citations = e.citations.pairs().map(((k, v)) => ((k): render(v))).join()
         (
           {
-            [#metadata(e.citations)#label(prefix + e.key)]
-            e.prefix
+            [#metadata(citations)#label(prefix + e.key)]
+            render(e.prefix)
           },
-          e.reference,
+          render(e.reference),
         )
       },
     )
