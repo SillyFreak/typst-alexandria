@@ -22,7 +22,32 @@
 
 = Introduction
 
-This package allows adding multiple bibliographies to the same document.
+_Alexandria_ allows adding multiple bibliographies to the same document. Its two main functions are #ref-fn("alexandria()") and #ref-fn("bibliographyx()"). Typical usage would look something like this:
+
+#crudo.join(
+  main: -1,
+  crudo.map(
+    ```typ
+    #import "@preview/NAME:VERSION": *
+    ```,
+    line => line.replace("NAME", package-meta.name).replace("VERSION", package-meta.version),
+  ),
+  ```typ
+  #show: alexandria(prefix: "x-", read: path => read(path))
+
+  ...
+
+  #bibliographyx(
+    "bibliography.bib",
+    // title: auto is not yet supported so it needs to be specified
+    title: "Bibliography",
+    // full: false is not yet supported so it needs to be specified
+    full: true,
+    // currently, only ieee style is supported
+    style: "ieee",
+  )
+  ```
+)
 
 = Module reference
 

@@ -1,11 +1,11 @@
-#import "/src/lib.typ" as alexandria
+#import "/src/lib.typ" as alexandria: *
 
 #set document(date: none)
 #set page(width: 16cm, height: auto, margin: 5mm, columns: 2)
 #set columns(gutter: 3mm)
 #set par(justify: true)
 
-#show: alexandria.alexandria(prefix: "x-", read: path => read(path))
+#show: alexandria(prefix: "x-", read: path => read(path))
 
 #let example-table(
   key,
@@ -48,7 +48,7 @@
 
 #example-table(<x-netwok>)
 
-#alexandria.bibliography(
+#bibliographyx(
   "bibliography.bib",
   title: "Bibliography",
   full: true,
