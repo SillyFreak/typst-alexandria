@@ -22,17 +22,17 @@
 
 = Introduction
 
-This is a template for typst packages. It provides the #ref-fn("id()") function:
+This is a template for typst packages. It provides the #ref-fn("process()") function:
 
 #file-code("lib.typ", {
   let lib = raw(block: true, lang: "typ", read("/src/lib.typ").trim(at: end))
-  lib = crudo.lines(lib, "10-")
+  lib = crudo.lines(lib, "11-")
   lib
 })
 
 Here is the function in action:
 #man-style.show-example(mode: "markup", dir: ttb, scope: scope, ```typ
-one equals #alexandria.id[one], 1 = #alexandria.id(1)
+one equals #alexandria.process("one")
 ```)
 
 = Module reference

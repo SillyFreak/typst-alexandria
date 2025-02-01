@@ -16,11 +16,17 @@ doc:
 
 # run test suite
 test *args:
+	cargo test
 	typst-test run {{ args }}
 
 # update test cases
 update *args:
 	typst-test update {{ args }}
+
+# build the parser WASM plugin
+plugin:
+	cargo build --release --target wasm32-unknown-unknown
+	cp target/wasm32-unknown-unknown/release/alexandria.wasm src/
 
 # package the library into the specified destination folder
 package target:

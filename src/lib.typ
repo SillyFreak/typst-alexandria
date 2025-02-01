@@ -1,10 +1,13 @@
+#let _p = plugin("alexandria.wasm")
+
 /// The identity function
 ///
 /// #example(mode: "markup", ```typ
-/// #alexandria.id(1)
-/// #alexandria.id[one]
+/// #alexandria.process("hello")
 /// ```)
 ///
-/// - x (any): some parameter
-/// -> any
-#let id(x) = x
+/// - x (str): some parameter
+/// -> str
+#let process(x) = {
+  cbor.decode(_p.process(cbor.encode(x)))
+}
