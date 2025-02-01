@@ -1,8 +1,8 @@
 /// The identity function
 ///
 /// #example(mode: "markup", ```typ
-/// #my-package.id(1)
-/// #my-package.id[one]
+/// #alexandria.id(1)
+/// #alexandria.id[one]
 /// ```)
 ///
 /// - x (any): some parameter

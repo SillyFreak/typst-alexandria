@@ -1,20 +1,20 @@
 # for a description of available keys, see https://github.com/typst/packages/?tab=readme-ov-file#package-format
 
 [package]
-name = "my-package"
+name = "alexandria"
 version = "0.0.1"
 entrypoint = "src/lib.typ"
 authors = [
 	"Clemens Koza <https://github.com/SillyFreak/>"
 ]
 license = "MIT"
-description = "my package"
+description = "Use multiple bibliographies in a single Typst document "
 # homepage = ""
-repository = "https://github.com/SillyFreak/typst-my-package"
-keywords = []
-categories = []
+repository = "https://github.com/SillyFreak/typst-alexandria"
+keywords = ["bibliography"]
+categories = ["model", "thesis"]
 disciplines = []
-compiler = ""
+compiler = "0.12.0"
 exclude = [
 	".github",
 	"docs",
