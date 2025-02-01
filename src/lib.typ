@@ -77,6 +77,10 @@
   assert.eq(full, true, message: "only full bibliographies are currently supported")
   assert.eq(style, "ieee", message: "only ieee style is currently supported")
 
+  let read-biblatex(file) = {
+    cbor.decode(_p.read_biblatex(cbor.encode((file: file, style: style))))
+  }
+
   if title != none {
     [= #title]
   }
@@ -87,25 +91,7 @@
     let (prefix, read) = config
 
     // TODO multiple paths with arrays
-    let bib = read(path)
-
-    let bib-entry(key, ..forms) = {
-      assert.eq(forms.pos().len(), 0)
-      let forms = forms.named()
-      [#metadata(forms)#key]
-      forms.normal
-    }
-    let ieee-entry(key, num, authors, year, rest) = (
-      bib-entry(
-        key,
-        normal: [[#num]],
-        prose: [#authors [#num]],
-        full: [[#num] #authors, #rest],
-        author: [#authors],
-        year: [#year],
-      ),
-      [#authors, #rest],
-    )
+    let bib = read-biblatex(read(path))
 
     grid(
       columns: 2,
@@ -117,13 +103,15 @@
       // align: auto,
       // stroke: (:),
       // inset: (:),
-      ..ieee-entry(
-        <x-netwok>,
-        1,
-        [R. Astley and L. Morris],
-        [2020],
-        ["At-scale impact of the Net Wok: A culinarically holistic investigation of distributed dumplings," _Armenian Journal of Proceedings_, vol. 61, pp. 192--219, 2020.],
-      ),
+      ..for e in bib {
+        (
+          {
+            [#metadata(e.citations)#label(prefix + e.key)]
+            e.prefix
+          },
+          e.reference,
+        )
+      },
     )
   }
 }
