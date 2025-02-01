@@ -161,6 +161,24 @@ mod tests {
 
     #[test]
     fn test_process() {
-        process(&cbor_encode("hello").unwrap()).unwrap();
+        let bib = r#"
+        @article{netwok,
+            title={At-scale impact of the {Net Wok}: A culinarically holistic investigation of distributed dumplings},
+            author={Astley, Rick and Morris, Linda},
+            journal={Armenian Journal of Proceedings},
+            volume={61},
+            pages={192--219},
+            year={2020},
+            publisher={Automattic Inc.}
+        }
+        "#;
+        read_biblatex(
+            &cbor_encode(&Config {
+                file: bib.to_string(),
+                style: "ieee".to_string(),
+            })
+            .unwrap(),
+        )
+        .unwrap();
     }
 }
