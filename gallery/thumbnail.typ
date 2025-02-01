@@ -1,8 +1,56 @@
 #import "/src/lib.typ" as alexandria
 
 #set document(date: none)
-#set page(width: 10cm, height: auto, margin: 5mm)
+#set page(width: 16cm, height: auto, margin: 5mm, columns: 2)
+#set columns(gutter: 3mm)
+#set par(justify: true)
 
-#let package-meta = toml("/typst.toml").package
+#show: alexandria.alexandria(prefix: "x-", read: path => read(path))
 
-#align(center)[_demonstrate #alexandria.process(package-meta.name) here_]
+#let example-table(
+  key,
+  ..forms,
+) = {
+  assert.eq(forms.named().len(), 0)
+  let forms = forms.pos()
+  if forms.len() == 0 {
+    forms = ("plain", "normal", "prose", "full", "author", "year")
+  }
+
+  table(
+    columns: (auto, 1fr),
+    inset: 1mm,
+    align: (right, left),
+    stroke: none,
+
+    ..for form in forms {
+      let (first, ..rest) = form.clusters()
+      let label = (upper(first), ..rest).join()
+      let citation = if form == "plain" {
+        ref(key)
+      } else {
+        cite(key, form: form)
+      }
+      ([#label:], citation)
+    }
+  )
+}
+
+= Regular Bibliography
+
+#example-table(<netwok>)
+
+#bibliography("bibliography.bib")
+
+#colbreak()
+
+= Alexandria
+
+#example-table(<x-netwok>)
+
+#alexandria.bibliography(
+  "bibliography.bib",
+  title: "Bibliography",
+  full: true,
+  style: "ieee",
+)
