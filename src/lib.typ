@@ -81,6 +81,42 @@
     cbor.decode(_p.read_biblatex(cbor.encode((file: file, style: style))))
   }
 
+  let render(body) = {
+    if type(body) == array {
+      body.map(render).join()
+    } else if "text" in body {
+      let body = body.text
+      set text(style: "italic") if body.font-style == "italic"
+      // TODO this is an absolute weight and not an offset
+      set text(weight: "bold") if body.font-weight == "bold"
+      set text(weight: "light") if body.font-weight == "light"
+      show: it => {
+        if body.font-variant == "small-caps" {
+          it = smallcaps(it)
+        }
+        if body.text-decoration == "underline" {
+          it = underline(it)
+        }
+        if body.vertical-align == "sup" {
+          it = h(0pt, weak: true) + super(it)
+        } else if body.vertical-align == "sub" {
+          it = h(0pt, weak: true) + sub(it)
+        }
+        it
+      }
+      body.text
+    } else if "elem" in body {
+      let body = body.elem
+      render(body.children)
+    } else if "link" in body {
+      let body = body.link
+      link(body.url, render(body.text))
+    } else {
+      set text(red)
+      repr(body)
+    }
+  }
+
   if title != none {
     [= #title]
   }
@@ -93,27 +129,38 @@
     // TODO multiple paths with arrays
     let bib = read-biblatex(read(path))
 
-    grid(
-      columns: 2,
-      // rows: (),
-      column-gutter: 0.65em,
-      // row-gutter: 13.2pt,
-      row-gutter: par.spacing,
-      // fill: none,
-      // align: auto,
-      // stroke: (:),
-      // inset: (:),
-      ..for e in bib {
-        let render = eval.with(mode: "markup")
+    if bib.any(e => e.prefix != none) {
+      grid(
+        columns: 2,
+        // rows: (),
+        column-gutter: 0.65em,
+        // row-gutter: 13.2pt,
+        row-gutter: par.spacing,
+        // fill: none,
+        // align: auto,
+        // stroke: (:),
+        // inset: (:),
+        ..for e in bib {
+          let citations = e.citations.pairs().map(((k, v)) => ((k): render(v))).join()
+          (
+            {
+              [#metadata(citations)#label(prefix + e.key)]
+              if e.prefix != none {
+                render(e.prefix)
+              }
+            },
+            render(e.reference),
+          )
+        },
+      )
+    } else {
+      let gutter = v(par.spacing, weak: true)
+      for (i, e) in bib.enumerate() {
         let citations = e.citations.pairs().map(((k, v)) => ((k): render(v))).join()
-        (
-          {
-            [#metadata(citations)#label(prefix + e.key)]
-            render(e.prefix)
-          },
-          render(e.reference),
-        )
-      },
-    )
+        if i != 0 { gutter }
+        [#metadata(citations)#label(prefix + e.key)]
+        render(e.reference)
+      }
+    }
   }
 }

@@ -9,6 +9,7 @@
 
 #let example-table(
   key,
+  style: auto,
   ..forms,
 ) = {
   assert.eq(forms.named().len(), 0)
@@ -29,7 +30,7 @@
       let citation = if form == "plain" {
         ref(key)
       } else {
-        cite(key, form: form)
+        cite(key, form: form, style: style)
       }
       ([#label:], citation)
     }
