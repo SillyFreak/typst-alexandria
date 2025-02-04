@@ -41,7 +41,10 @@
 
 #example-table(<netwok>)
 
-#bibliography("bibliography.bib")
+#bibliography(
+  "bibliography.bib",
+  full: true,
+)
 
 #colbreak()
 
@@ -53,5 +56,5 @@
   "bibliography.bib",
   title: "Bibliography",
   full: true,
-  style: "ieee",
+  // style: "ieee",
 )
