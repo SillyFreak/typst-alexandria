@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use hayagriva::{
     archive::ArchivedStyle, citationberg, io::from_biblatex_str, BibliographyDriver,
     BibliographyRequest, CitationItem, CitationRequest, CitePurpose,
@@ -13,6 +15,8 @@ use util::*;
 
 #[cfg(target_arch = "wasm32")]
 wasm_minimal_protocol::initiate_protocol!();
+
+static LOCALES: LazyLock<Vec<citationberg::Locale>> = LazyLock::new(hayagriva::archive::locales);
 
 #[cfg_attr(target_arch = "wasm32", wasm_func)]
 pub fn read_biblatex(config: &[u8]) -> Result<Vec<u8>, String> {
@@ -37,8 +41,8 @@ pub fn read_biblatex(config: &[u8]) -> Result<Vec<u8>, String> {
         driver.citation(CitationRequest::new(
             vec![CitationItem::with_entry(entry)],
             &style,
-            None,
-            &[],
+            Some(config.locale.clone()),
+            &LOCALES,
             None,
         ));
 
@@ -46,16 +50,16 @@ pub fn read_biblatex(config: &[u8]) -> Result<Vec<u8>, String> {
             driver.citation(CitationRequest::new(
                 vec![CitationItem::with_entry(entry).kind(purpose)],
                 &style,
-                None,
-                &[],
+                Some(config.locale.clone()),
+                &LOCALES,
                 None,
             ));
         }
     }
     let rendered = driver.finish(BibliographyRequest {
         style: &style,
-        locale: None,
-        locale_files: &[],
+        locale: Some(config.locale),
+        locale_files: &LOCALES,
     });
 
     let Some(rendered_bib) = rendered.bibliography else {
@@ -113,6 +117,7 @@ mod tests {
             &cbor_encode(&Config {
                 file: bib.to_string(),
                 style: "ieee".to_string(),
+                locale: hayagriva::citationberg::LocaleCode::en_us(),
             })
             .unwrap(),
         )

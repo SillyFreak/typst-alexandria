@@ -11,6 +11,7 @@ use serde::{
 pub struct Config {
     pub file: String,
     pub style: String,
+    pub locale: hayagriva::citationberg::LocaleCode,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq)]

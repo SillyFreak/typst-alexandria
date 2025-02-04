@@ -77,8 +77,8 @@
   assert.eq(full, true, message: "only full bibliographies are currently supported")
   assert.eq(style, "ieee", message: "only ieee style is currently supported")
 
-  let read-biblatex(file) = {
-    cbor.decode(_p.read_biblatex(cbor.encode((file: file, style: style))))
+  let read-biblatex(file, locale) = {
+    cbor.decode(_p.read_biblatex(cbor.encode((file: file, style: style, locale: locale))))
   }
 
   let render(body) = {
@@ -127,7 +127,9 @@
     let (prefix, read) = config
 
     // TODO multiple paths with arrays
-    let bib = read-biblatex(read(path))
+    let locale = text.lang
+    if text.region != none { locale += "-" + text.region }
+    let bib = read-biblatex(read(path), locale)
 
     if bib.any(e => e.prefix != none) {
       grid(
