@@ -41,7 +41,6 @@ _Alexandria_ allows adding multiple bibliographies to the same document. Its two
     "bibliography.bib",
     // title: auto is not yet supported so it needs to be specified
     title: "Bibliography",
-    // full: true is not yet supported
   )
   ```
 )
@@ -81,7 +80,8 @@ Below is an example text using equivalent content, showing the current problems:
   #bibliographyx(
     "bibliography.bib",
     title: "Bibliography",
-    style: "apa",
+    full: true,
+    // style: "apa",
   )
 ]
 
@@ -100,7 +100,7 @@ Below is an example text using equivalent content, showing the current problems:
     "bibliography.bib",
     // title: "Bibliography",
     full: true,
-    style: "apa",
+    // style: "apa",
   )
 ]
 

@@ -92,7 +92,6 @@
   import "state.typ": *
 
   assert.ne(title, auto, message: "automatic title is not yet supported")
-  assert.eq(full, false, message: "full bibliographies are not yet supported")
 
   if title != none {
     [= #title]
@@ -119,6 +118,7 @@
     set-bibliography(prefix, citations => {
       hayagriva.read(
         path.map(path => (path: path, content: read(path))),
+        full,
         style,
         locale,
         citations,

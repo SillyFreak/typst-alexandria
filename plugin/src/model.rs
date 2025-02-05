@@ -8,6 +8,7 @@ use serde::{
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub sources: Vec<Source>,
+    pub full: bool,
     pub style: String,
     pub locale: hayagriva::citationberg::LocaleCode,
     pub citations: Vec<Citation>,

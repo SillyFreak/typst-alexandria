@@ -101,6 +101,18 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             None,
         ));
     }
+
+    if config.full {
+        for entry in entries.values() {
+            driver.citation(CitationRequest::new(
+                vec![CitationItem::new(entry, None, None, true, None)],
+                &style,
+                Some(config.locale.clone()),
+                &LOCALES,
+                None,
+            ));
+        }
+    }
     let rendered = driver.finish(BibliographyRequest {
         style: &style,
         locale: Some(config.locale),
@@ -160,6 +172,7 @@ mod tests {
                 path: "bibliography.bib".to_string(),
                 content: bib.to_string(),
             }],
+            full: true,
             style: "ieee".to_string(),
             locale: hayagriva::citationberg::LocaleCode::en_us(),
             citations: vec![],

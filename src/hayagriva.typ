@@ -2,11 +2,12 @@
 
 #let read(
   sources,
+  full,
   style,
   locale,
   citations,
 ) = {
-  let config = cbor.encode((sources: sources, style: style, locale: locale, citations: citations))
+  let config = cbor.encode((sources: sources, full: full, style: style, locale: locale, citations: citations))
   cbor.decode(_p.read(config))
 }
 
