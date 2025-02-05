@@ -1,3 +1,7 @@
+// Parts of code in this file are based on
+// https://github.com/typst/typst/blob/26e65bfef5b1da7f6c72e1409237cf03fb5d6069/crates/typst-library/src/model/bibliography.rs
+// licensed from the authors under Apache License 2.0
+
 use std::ffi::OsStr;
 use std::path::Path;
 use std::sync::LazyLock;
