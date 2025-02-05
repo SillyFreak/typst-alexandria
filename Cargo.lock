@@ -8,6 +8,7 @@ version = "0.1.0"
 dependencies = [
  "ciborium",
  "hayagriva",
+ "indexmap",
  "serde",
  "wasm-minimal-protocol",
 ]

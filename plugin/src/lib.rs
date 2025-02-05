@@ -1,4 +1,3 @@
-use std::collections::{hash_map, HashMap};
 use std::ffi::OsStr;
 use std::path::Path;
 use std::sync::LazyLock;
@@ -7,6 +6,7 @@ use hayagriva::{
     archive::ArchivedStyle, citationberg, BibliographyDriver, BibliographyRequest, CitationItem,
     CitationRequest, Library,
 };
+use indexmap::{map, IndexMap};
 #[cfg(target_arch = "wasm32")]
 use wasm_minimal_protocol::wasm_func;
 
@@ -45,8 +45,8 @@ fn read_library(source: &Source) -> Result<Library, String> {
     Ok(library)
 }
 
-fn read_libraries(sources: &[Source]) -> Result<HashMap<String, hayagriva::Entry>, String> {
-    let mut map = HashMap::new();
+fn read_libraries(sources: &[Source]) -> Result<IndexMap<String, hayagriva::Entry>, String> {
+    let mut map = IndexMap::new();
     let mut duplicates = Vec::new();
 
     // We might have multiple bib/yaml files
@@ -55,10 +55,10 @@ fn read_libraries(sources: &[Source]) -> Result<HashMap<String, hayagriva::Entry
 
         for entry in library {
             match map.entry(entry.key().into()) {
-                hash_map::Entry::Vacant(vacant) => {
+                map::Entry::Vacant(vacant) => {
                     vacant.insert(entry);
                 }
-                hash_map::Entry::Occupied(_) => {
+                map::Entry::Occupied(_) => {
                     duplicates.push(entry.key().to_string());
                 }
             }
