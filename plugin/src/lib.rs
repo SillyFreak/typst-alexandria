@@ -1,8 +1,11 @@
-use std::{ffi::OsStr, path::Path, sync::LazyLock};
+use std::collections::{hash_map, HashMap};
+use std::ffi::OsStr;
+use std::path::Path;
+use std::sync::LazyLock;
 
 use hayagriva::{
-    archive::ArchivedStyle, citationberg, BibliographyDriver,
-    BibliographyRequest, CitationItem, CitationRequest, CitePurpose, Library,
+    archive::ArchivedStyle, citationberg, BibliographyDriver, BibliographyRequest, CitationItem,
+    CitationRequest, Library,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_minimal_protocol::wasm_func;
@@ -26,7 +29,7 @@ pub fn read(config: &[u8]) -> Result<Vec<u8>, String> {
     Ok(output)
 }
 
-fn read_library(source: Source) -> Result<Library, String> {
+fn read_library(source: &Source) -> Result<Library, String> {
     let Source { path, content } = source;
     let ext = Path::new(&path)
         .extension()
@@ -42,15 +45,39 @@ fn read_library(source: Source) -> Result<Library, String> {
     Ok(library)
 }
 
-fn read_impl(mut config: Config) -> Result<Bibliography, String> {
-    let source = {
-        if config.sources.len() != 1 {
-            return Err("exactly one bibliography file is required".to_string());
-        }
-        config.sources.pop().unwrap()
-    };
+fn read_libraries(sources: &[Source]) -> Result<HashMap<String, hayagriva::Entry>, String> {
+    let mut map = HashMap::new();
+    let mut duplicates = Vec::new();
 
-    let library = read_library(source)?;
+    // We might have multiple bib/yaml files
+    for source in sources {
+        let library = read_library(source)?;
+
+        for entry in library {
+            match map.entry(entry.key().into()) {
+                hash_map::Entry::Vacant(vacant) => {
+                    vacant.insert(entry);
+                }
+                hash_map::Entry::Occupied(_) => {
+                    duplicates.push(entry.key().to_string());
+                }
+            }
+        }
+    }
+
+    if !duplicates.is_empty() {
+        return Err(format!(
+            "duplicate bibliography keys: {}",
+            duplicates.join(", ")
+        ));
+    }
+
+    Ok(map)
+}
+
+fn read_impl(config: Config) -> Result<Bibliography, String> {
+    let entries = read_libraries(&config.sources)?;
+
     let style =
         ArchivedStyle::by_name(&config.style).ok_or(format!("Unknown style: {}", config.style))?;
     let citationberg::Style::Independent(style) = style.get() else {
@@ -58,26 +85,21 @@ fn read_impl(mut config: Config) -> Result<Bibliography, String> {
     };
 
     let mut driver = BibliographyDriver::new();
-    for entry in library.iter() {
-        use CitePurpose as P;
+    for citation in config.citations {
+        let Some(entry) = entries.get(&citation.key) else {
+            return Err(format!(
+                "key `{}` does not exist in the bibliography",
+                citation.key
+            ));
+        };
 
         driver.citation(CitationRequest::new(
-            vec![CitationItem::with_entry(entry)],
+            vec![CitationItem::new(entry, None, None, false, citation.form)],
             &style,
             Some(config.locale.clone()),
             &LOCALES,
             None,
         ));
-
-        for purpose in [P::Prose, P::Full, P::Author, P::Year] {
-            driver.citation(CitationRequest::new(
-                vec![CitationItem::with_entry(entry).kind(purpose)],
-                &style,
-                Some(config.locale.clone()),
-                &LOCALES,
-                None,
-            ));
-        }
     }
     let rendered = driver.finish(BibliographyRequest {
         style: &style,
@@ -89,32 +111,31 @@ fn read_impl(mut config: Config) -> Result<Bibliography, String> {
         return Err("no bibliography".to_string());
     };
 
-    let references = rendered_bib.items.into_iter();
-    let citations = rendered.citations.chunks(5);
-    let entries = references
-        .zip(citations)
-        .map(|(reference, citations)| {
+    let references = rendered_bib
+        .items
+        .into_iter()
+        .map(|reference| {
             let key = reference.key;
             let prefix = reference.first_field.map(Content::Child);
             let reference = Content::Children(reference.content);
 
-            let forms = ["normal", "prose", "full", "author", "year"]
-                .iter()
-                .map(ToString::to_string);
-            let items = citations
-                .iter()
-                .map(|item| Content::Children(item.citation.clone()));
-            let citations = forms.zip(items).collect();
             Entry {
                 key,
                 prefix,
                 reference,
-                citations,
             }
         })
         .collect();
+    let citations = rendered
+        .citations
+        .into_iter()
+        .map(|item| Content::Children(item.citation))
+        .collect();
 
-    Ok(Bibliography { entries })
+    Ok(Bibliography {
+        references,
+        citations,
+    })
 }
 
 #[cfg(test)]
@@ -141,6 +162,7 @@ mod tests {
             }],
             style: "ieee".to_string(),
             locale: hayagriva::citationberg::LocaleCode::en_us(),
+            citations: vec![],
         })
         .unwrap();
     }

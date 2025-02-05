@@ -1,30 +1,38 @@
-use std::collections::HashMap;
-
-use hayagriva::{ElemChild, ElemChildren, Formatted};
+use hayagriva::{CitePurpose, ElemChild, ElemChildren, Formatted};
 use serde::{
     ser::{SerializeSeq, SerializeStructVariant},
-    Deserialize, Serialize, Serializer,
+    Deserialize, Deserializer, Serialize, Serializer,
 };
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
     pub sources: Vec<Source>,
     pub style: String,
     pub locale: hayagriva::citationberg::LocaleCode,
+    pub citations: Vec<Citation>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[derive(Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Source {
     pub path: String,
     pub content: String,
 }
 
+#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct Citation {
+    pub key: String,
+    #[serde(deserialize_with = "deser_cite_purpose")]
+    pub form: Option<CitePurpose>,
+}
+
 #[derive(Serialize, Debug, Clone, PartialEq)]
-#[serde(transparent)]
+#[serde(rename_all = "kebab-case")]
 pub struct Bibliography {
-    pub entries: Vec<Entry>,
+    pub references: Vec<Entry>,
+    pub citations: Vec<Content>,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
@@ -33,7 +41,6 @@ pub struct Entry {
     pub key: String,
     pub prefix: Option<Content>,
     pub reference: Content,
-    pub citations: HashMap<String, Content>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -84,4 +91,39 @@ impl Serialize for Content {
             }
         }
     }
+}
+
+fn deser_cite_purpose<'de, D>(deserializer: D) -> Result<Option<CitePurpose>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    use std::fmt;
+
+    use serde::de::{self, Visitor};
+
+    struct CitePurposeVisitor;
+
+    impl<'de> Visitor<'de> for CitePurposeVisitor {
+        type Value = Option<CitePurpose>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a valid citation form: normal, prose, full, author, or year")
+        }
+
+        fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            match value {
+                "normal" => Ok(None),
+                "prose" => Ok(Some(CitePurpose::Prose)),
+                "full" => Ok(Some(CitePurpose::Full)),
+                "author" => Ok(Some(CitePurpose::Author)),
+                "year" => Ok(Some(CitePurpose::Year)),
+                _ => Err(de::Error::invalid_value(de::Unexpected::Str(value), &self)),
+            }
+        }
+    }
+
+    deserializer.deserialize_str(CitePurposeVisitor)
 }

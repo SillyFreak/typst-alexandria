@@ -41,31 +41,28 @@ _Alexandria_ allows adding multiple bibliographies to the same document. Its two
     "bibliography.bib",
     // title: auto is not yet supported so it needs to be specified
     title: "Bibliography",
-    // full: false is not yet supported so it needs to be specified
-    full: true,
-    // currently, only ieee style is supported
-    style: "ieee",
+    // full: true is not yet supported
   )
   ```
 )
 
 With this setup, you can use regular Typst citations (to keys starting with the configured prefix) to cite entries in an Alexandria bibliography.
 
-Note that Alexandria is currently limited to full IEEE bibliographies and non-English bibliographies are untested, but more general support is planned soon.
+Note that Alexandria is currently limited to non-Englishfull bibliographies, but more general support is planned soon.
 
 #pagebreak(weak: true)
 
 = Example
 
+// #set text(lang: "de")
+
 Below is an example text using equivalent content, showing the current problems:
 
-- References are not yet ordered by citation order.
 - Alexandria citations are converted to links and are thus affected by `link` rules.
 - The native bibliography has `numbering: none` applied to its title, while Alexandria's hasn't. `show bibliography: set heading(...)` also won't work on it.
 - Adjacent citations aren't collapsed yet, thus the Alexandria version misses a comma.
-- Non-full bibliographies are not supported yet, thus there's an extra entry n the Alexandria version.
-
-None of these should be insurmountable in the near future.
+- Non-full bibliographies are not supported yet, thus there's an extra entry in the native version that Alexandria can't produce yet.
+- Per-citation customization of style and language are not supported yet, thus there is an English "and" in place of a German #text(lang: "de")["und"] in the second paragraph.
 
 == Alexandria version
 
@@ -74,13 +71,17 @@ None of these should be insurmountable in the near future.
   #show: alexandria(prefix: "x-", read: path => read(path))
 
   For further information on pirate and quark organizations, see @x-arrgh @x-quark.
-  #cite(<x-netwok>, form: "author") discuss the theory of distributed dumplings.
+  #cite(<x-distress>, form: "author") discusses bibliographical distress.
+
+  #text(lang: "de")[
+    Über den "Netzwok" ist in der Arbeit von #cite(<x-netwok>, form: "prose") zu lesen.
+  ]
 
   #set heading(offset: 2)
   #bibliographyx(
     "bibliography.bib",
     title: "Bibliography",
-    full: true,
+    style: "apa",
   )
 ]
 
@@ -88,13 +89,18 @@ None of these should be insurmountable in the near future.
 
 #[
   For further information on pirate and quark organizations, see @arrgh @quark.
-  #cite(<netwok>, form: "author") discuss the theory of distributed dumplings.
+  #cite(<distress>, form: "author") discusses bibliographical distress.
+
+  #text(lang: "de")[
+    Über den "Netzwok" ist in der Arbeit von #cite(<netwok>, form: "prose") zu lesen.
+  ]
 
   #set heading(offset: 2)
   #bibliography(
     "bibliography.bib",
     // title: "Bibliography",
-    // full: true,
+    full: true,
+    style: "apa",
   )
 ]
 

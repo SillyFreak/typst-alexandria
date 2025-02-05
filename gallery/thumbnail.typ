@@ -43,7 +43,7 @@
 
 #bibliography(
   "bibliography.bib",
-  full: true,
+  // full: true,
 )
 
 #colbreak()
@@ -55,6 +55,6 @@
 #bibliographyx(
   "bibliography.bib",
   title: "Bibliography",
-  full: true,
+  // full: true,
   // style: "ieee",
 )
