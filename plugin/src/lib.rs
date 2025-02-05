@@ -1,8 +1,8 @@
-use std::sync::LazyLock;
+use std::{ffi::OsStr, path::Path, sync::LazyLock};
 
 use hayagriva::{
-    archive::ArchivedStyle, citationberg, io::from_biblatex_str, BibliographyDriver,
-    BibliographyRequest, CitationItem, CitationRequest, CitePurpose,
+    archive::ArchivedStyle, citationberg, BibliographyDriver,
+    BibliographyRequest, CitationItem, CitationRequest, CitePurpose, Library,
 };
 #[cfg(target_arch = "wasm32")]
 use wasm_minimal_protocol::wasm_func;
@@ -19,15 +19,38 @@ wasm_minimal_protocol::initiate_protocol!();
 static LOCALES: LazyLock<Vec<citationberg::Locale>> = LazyLock::new(hayagriva::archive::locales);
 
 #[cfg_attr(target_arch = "wasm32", wasm_func)]
-pub fn read_biblatex(config: &[u8]) -> Result<Vec<u8>, String> {
+pub fn read(config: &[u8]) -> Result<Vec<u8>, String> {
     let config: Config = ciborium::from_reader(config).map_err_to_string()?;
+    let bibliography = read_impl(config)?;
+    let output = cbor_encode(&bibliography).map_err_to_string()?;
+    Ok(output)
+}
 
-    let library = from_biblatex_str(&config.file).map_err(|errs| {
-        errs.iter()
-            .map(|err| format!("{:?}", err))
-            .collect::<Vec<_>>()
-            .join("\n")
-    })?;
+fn read_library(source: Source) -> Result<Library, String> {
+    let Source { path, content } = source;
+    let ext = Path::new(&path)
+        .extension()
+        .and_then(OsStr::to_str)
+        .unwrap_or_default();
+    let library = match ext.to_lowercase().as_str() {
+        "yml" | "yaml" => hayagriva::io::from_yaml_str(&content)
+            .map_err(|err| format!("failed to parse YAML ({err})"))?,
+        "bib" => hayagriva::io::from_biblatex_str(&content)
+            .map_err(|_errors| format!("failed to parse BibLaTeX file ({path})"))?,
+        _ => return Err("unknown bibliography format (must be .yml/.yaml or .bib)".to_string()),
+    };
+    Ok(library)
+}
+
+fn read_impl(mut config: Config) -> Result<Bibliography, String> {
+    let source = {
+        if config.sources.len() != 1 {
+            return Err("exactly one bibliography file is required".to_string());
+        }
+        config.sources.pop().unwrap()
+    };
+
+    let library = read_library(source)?;
     let style =
         ArchivedStyle::by_name(&config.style).ok_or(format!("Unknown style: {}", config.style))?;
     let citationberg::Style::Independent(style) = style.get() else {
@@ -90,10 +113,8 @@ pub fn read_biblatex(config: &[u8]) -> Result<Vec<u8>, String> {
             }
         })
         .collect();
-    let bibliography = Bibliography { entries };
 
-    let output = cbor_encode(&bibliography).map_err_to_string()?;
-    Ok(output)
+    Ok(Bibliography { entries })
 }
 
 #[cfg(test)]
@@ -113,14 +134,14 @@ mod tests {
             publisher={Automattic Inc.}
         }
         "#;
-        read_biblatex(
-            &cbor_encode(&Config {
-                file: bib.to_string(),
-                style: "ieee".to_string(),
-                locale: hayagriva::citationberg::LocaleCode::en_us(),
-            })
-            .unwrap(),
-        )
+        read_impl(Config {
+            sources: vec![Source {
+                path: "bibliography.bib".to_string(),
+                content: bib.to_string(),
+            }],
+            style: "ieee".to_string(),
+            locale: hayagriva::citationberg::LocaleCode::en_us(),
+        })
         .unwrap();
     }
 }

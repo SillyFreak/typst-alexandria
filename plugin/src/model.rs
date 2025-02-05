@@ -9,9 +9,16 @@ use serde::{
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
-    pub file: String,
+    pub sources: Vec<Source>,
     pub style: String,
     pub locale: hayagriva::citationberg::LocaleCode,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct Source {
+    pub path: String,
+    pub content: String,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq)]

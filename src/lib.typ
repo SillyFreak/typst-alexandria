@@ -1,4 +1,4 @@
-#let _p = plugin("alexandria.wasm")
+#import "hayagriva.typ"
 
 #let _config = state("alexandria-config", none)
 
@@ -77,10 +77,6 @@
   assert.eq(full, true, message: "only full bibliographies are currently supported")
   assert.eq(style, "ieee", message: "only ieee style is currently supported")
 
-  let read-biblatex(file, locale) = {
-    cbor.decode(_p.read_biblatex(cbor.encode((file: file, style: style, locale: locale))))
-  }
-
   let render(body) = {
     if type(body) == array {
       body.map(render).join()
@@ -126,10 +122,18 @@
     assert.ne(config, none, message: "Alexandria is not configured. Make sure to use `#show: alexandria(...)`")
     let (prefix, read) = config
 
-    // TODO multiple paths with arrays
+    let path = path
+    if type(path) != array {
+      path = (path,)
+    }
+
     let locale = text.lang
     if text.region != none { locale += "-" + text.region }
-    let bib = read-biblatex(read(path), locale)
+    let bib = hayagriva.read(
+      path.map(path => (path: path, content: read(path))),
+      style,
+      locale,
+    )
 
     if bib.any(e => e.prefix != none) {
       grid(
