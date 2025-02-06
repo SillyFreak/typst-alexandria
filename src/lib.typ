@@ -131,7 +131,10 @@
     })
 
     context {
-      let references = get-bibliography(prefix).references
+      let (references, hanging-indent) = get-bibliography(prefix)
+
+      set par(hanging-indent: 1.5em) if hanging-indent
+
       if references.any(e => e.prefix != none) {
         grid(
           columns: 2,

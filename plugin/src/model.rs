@@ -36,6 +36,7 @@ pub struct Citation {
 pub struct Bibliography {
     pub references: Vec<Entry>,
     pub citations: Vec<Content>,
+    pub hanging_indent: bool,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq)]

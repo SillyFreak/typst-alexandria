@@ -164,9 +164,12 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
         .map(|item| Content::Children(true, item.citation))
         .collect();
 
+    let hanging_indent = rendered_bib.hanging_indent;
+
     Ok(Bibliography {
         references,
         citations,
+        hanging_indent,
     })
 }
 
