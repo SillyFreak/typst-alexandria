@@ -18,11 +18,11 @@ doc:
 # run test suite
 test *args:
 	cargo test
-	typst-test run {{ args }}
+	tt run {{ args }}
 
 # update test cases
 update *args:
-	typst-test update {{ args }}
+	tt update {{ args }}
 
 # build the parser WASM plugin
 plugin:
