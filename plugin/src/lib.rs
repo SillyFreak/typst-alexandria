@@ -149,7 +149,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
         .map(|reference| {
             let key = reference.key;
             let prefix = reference.first_field.map(Content::Child);
-            let reference = Content::Children(reference.content);
+            let reference = Content::Children(false, reference.content);
 
             Entry {
                 key,
@@ -161,7 +161,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
     let citations = rendered
         .citations
         .into_iter()
-        .map(|item| Content::Children(item.citation))
+        .map(|item| Content::Children(true, item.citation))
         .collect();
 
     Ok(Bibliography {

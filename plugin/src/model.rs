@@ -48,7 +48,7 @@ pub struct Entry {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Content {
-    Children(ElemChildren),
+    Children(bool, ElemChildren),
     Child(ElemChild),
 }
 
@@ -58,10 +58,16 @@ impl Serialize for Content {
         S: Serializer,
     {
         match self {
-            Self::Children(children) => {
-                let mut seq = serializer.serialize_seq(Some(children.0.len()))?;
-                for e in &children.0 {
-                    seq.serialize_element(&Self::Child(e.clone()))?;
+            Self::Children(is_citation, ElemChildren(children)) => {
+                let mut seq = serializer.serialize_seq(Some(children.len()))?;
+                for (i, e) in children.iter().enumerate() {
+                    let mut e = e.clone();
+                    if *is_citation && i == 0 {
+                        if let ElemChild::Text(Formatted { text, .. }) = &mut e {
+                            *text = text.trim_start().to_string();
+                        }
+                    }
+                    seq.serialize_element(&Self::Child(e))?;
                 }
                 seq.end()
             }
@@ -77,7 +83,7 @@ impl Serialize for Content {
             }
             Self::Child(ElemChild::Elem(elem)) => {
                 let mut s = serializer.serialize_struct_variant("content", 1, "elem", 1)?;
-                s.serialize_field("children", &Self::Children(elem.children.clone()))?;
+                s.serialize_field("children", &Self::Children(false, elem.children.clone()))?;
                 s.end()
             }
             Self::Child(ElemChild::Markup(markup)) => {
