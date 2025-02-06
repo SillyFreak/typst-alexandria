@@ -1,13 +1,23 @@
 #import "hayagriva.typ"
 
-#let citation(prefix, key, form: "normal") = {
+#let _locale() = {
+  let locale = text.lang
+  if text.region != none { locale += "-" + text.region }
+  locale
+}
+
+#let citation(prefix, key, form: "normal", style: auto) = {
   import "state.typ": *
 
   assert(str(key).starts-with(prefix), message: "Can only refer to an entry with the given prefix.")
-  let bare-key = str(key).slice(prefix.len())
 
   let index = get-citation-index(prefix)
-  add-citation(prefix, (key: bare-key, form: form))
+  context add-citation(prefix, (
+    key: str(key).slice(prefix.len()),
+    form: form,
+    ..if style != auto { (style: repr(style).slice(1, -1)) },
+    locale: _locale(),
+  ))
   context link(key, hayagriva.render(get-citation(prefix, index)))
 }
 
@@ -52,7 +62,7 @@
       return it
     }
 
-    context citation(prefix, it.key, form: it.form)
+    context citation(prefix, it.key, form: it.form, style: it.style)
   }
 
   body
@@ -93,6 +103,11 @@
 
   assert.ne(title, auto, message: "automatic title is not yet supported")
 
+  let path = path
+  if type(path) != array {
+    path = (path,)
+  }
+
   if title != none {
     [= #title]
   }
@@ -107,14 +122,7 @@
       assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
     }
 
-    let path = path
-    if type(path) != array {
-      path = (path,)
-    }
-
-    let locale = text.lang
-    if text.region != none { locale += "-" + text.region }
-
+    let locale = _locale()
     set-bibliography(prefix, citations => {
       hayagriva.read(
         path.map(path => (path: path, content: read(path))),

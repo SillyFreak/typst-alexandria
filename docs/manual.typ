@@ -47,23 +47,38 @@ _Alexandria_ allows adding multiple bibliographies to the same document. Its two
 
 With this setup, you can use regular Typst citations (to keys starting with the configured prefix) to cite entries in an Alexandria bibliography.
 
-Note that Alexandria is currently limited to non-Englishfull bibliographies, but more general support is planned soon.
+Some known limitations:
+
+- Alexandria citations are converted to links and are thus affected by `link` rules.
+- Native bibliographies have `numbering: none` applied to its title, while Alexandrias' haven't. `show bibliography: set heading(...)` also won't work on them.
+- Adjacent citations aren't collapsed.
+- Bibiliography entries don't have a hanging indent in styles that require this.
+- Citations that are shown as footnotes are not supported yet.
+
+The example on the next page demonstrates some of these. If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
 
 #pagebreak(weak: true)
 
-= Example
+= Example -- native Typst version (APA)
 
-// #set text(lang: "de")
+#[
+  For further information on pirate and quark organizations, see @arrgh @quark.
+  #cite(<distress>, form: "author") discusses bibliographical distress.
 
-Below is an example text using equivalent content, showing the current problems:
+  #text(lang: "de")[
+    Über den "Netzwok" ist in der Arbeit von #cite(<netwok>, form: "prose", style: "apa") zu lesen.
+  ]
 
-- Alexandria citations are converted to links and are thus affected by `link` rules.
-- The native bibliography has `numbering: none` applied to its title, while Alexandria's hasn't. `show bibliography: set heading(...)` also won't work on it.
-- Adjacent citations aren't collapsed yet, thus the Alexandria version misses a comma.
-- Non-full bibliographies are not supported yet, thus there's an extra entry in the native version that Alexandria can't produce yet.
-- Per-citation customization of style and language are not supported yet, thus there is an English "and" in place of a German #text(lang: "de")["und"] in the second paragraph.
+  #set heading(offset: 1)
+  #bibliography(
+    "bibliography.bib",
+    // title: "Bibliography",
+    full: true,
+    style: "apa",
+  )
+]
 
-== Alexandria version
+= Example -- Alexandria version (APA)
 
 #[
   #import alexandria: *
@@ -73,34 +88,39 @@ Below is an example text using equivalent content, showing the current problems:
   #cite(<x-distress>, form: "author") discusses bibliographical distress.
 
   #text(lang: "de")[
-    Über den "Netzwok" ist in der Arbeit von #cite(<x-netwok>, form: "prose") zu lesen.
+    Über den "Netzwok" ist in der Arbeit von #cite(<x-netwok>, form: "prose", style: "ieee") zu lesen.
   ]
 
-  #set heading(offset: 2)
+  #set heading(offset: 1)
   #bibliographyx(
     "bibliography.bib",
+    prefix: "x-",
     title: "Bibliography",
     full: true,
-    // style: "apa",
+    style: "apa",
   )
 ]
 
-== Native Typst version
+= Example -- Alexandria version (IEEE)
 
 #[
-  For further information on pirate and quark organizations, see @arrgh @quark.
-  #cite(<distress>, form: "author") discusses bibliographical distress.
+  #import alexandria: *
+  #show: alexandria(prefix: "y-", read: path => read(path))
+
+  For further information on pirate and quark organizations, see @y-arrgh @y-quark.
+  #cite(<y-distress>, form: "author") discusses bibliographical distress.
 
   #text(lang: "de")[
-    Über den "Netzwok" ist in der Arbeit von #cite(<netwok>, form: "prose") zu lesen.
+    Über den "Netzwok" ist in der Arbeit von #cite(<y-netwok>, form: "prose", style: "apa") zu lesen.
   ]
 
-  #set heading(offset: 2)
-  #bibliography(
+  #set heading(offset: 1)
+  #bibliographyx(
     "bibliography.bib",
-    // title: "Bibliography",
+    prefix: "y-",
+    title: "Bibliography",
     full: true,
-    // style: "apa",
+    style: "ieee",
   )
 ]
 

@@ -11,6 +11,7 @@ use hayagriva::{
     CitationRequest, Library,
 };
 use indexmap::{map, IndexMap};
+use typed_arena::Arena;
 #[cfg(target_arch = "wasm32")]
 use wasm_minimal_protocol::wasm_func;
 
@@ -88,6 +89,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
         return Err("style is not an IndependentStyle".to_string());
     };
 
+    let styles = Arena::new();
     let mut driver = BibliographyDriver::new();
     for citation in config.citations {
         let Some(entry) = entries.get(&citation.key) else {
@@ -97,10 +99,24 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             ));
         };
 
+        let citation_style = citation
+            .style
+            .map(|style| {
+                let style =
+                    ArchivedStyle::by_name(&style).ok_or(format!("Unknown style: {}", style))?;
+                let citationberg::Style::Independent(style) = style.get() else {
+                    return Err("style is not an IndependentStyle".to_string());
+                };
+                let style = styles.alloc(style);
+                Ok(&*style)
+            })
+            .transpose()?
+            .unwrap_or(&style);
+
         driver.citation(CitationRequest::new(
             vec![CitationItem::new(entry, None, None, false, citation.form)],
-            &style,
-            Some(config.locale.clone()),
+            citation_style,
+            Some(citation.locale),
             &LOCALES,
             None,
         ));

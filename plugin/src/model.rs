@@ -27,6 +27,8 @@ pub struct Citation {
     pub key: String,
     #[serde(deserialize_with = "deser_cite_purpose")]
     pub form: Option<CitePurpose>,
+    pub style: Option<String>,
+    pub locale: hayagriva::citationberg::LocaleCode,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
