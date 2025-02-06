@@ -50,7 +50,7 @@
       return it
     }
 
-    citation(prefix, it.target)
+    citation(prefix, it.target, form: cite.form, style: cite.style)
   }
 
   show cite: it => {
