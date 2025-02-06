@@ -82,8 +82,10 @@ impl Serialize for Content {
                 s.end()
             }
             Self::Child(ElemChild::Elem(elem)) => {
-                let mut s = serializer.serialize_struct_variant("content", 1, "elem", 1)?;
+                let mut s = serializer.serialize_struct_variant("content", 1, "elem", 2)?;
                 s.serialize_field("children", &Self::Children(false, elem.children.clone()))?;
+                s.serialize_field("display", &elem.display)?;
+                // s.serialize_field("meta", &elem.meta)?;
                 s.end()
             }
             Self::Child(ElemChild::Markup(markup)) => {

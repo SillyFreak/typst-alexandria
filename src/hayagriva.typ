@@ -37,6 +37,7 @@
     body.text
   } else if "elem" in body {
     let body = body.elem
+    // TODO handle body.display when present
     render(body.children)
   } else if "link" in body {
     let body = body.link
