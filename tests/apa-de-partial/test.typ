@@ -1,7 +1,6 @@
 ///[skip]
 
-/// not entirely sure why this fails; seems like there is a rendering inconsistency between plain
-/// "(Aldrin, n.d.)" and the same text produced by a citation.
+/// https://github.com/typst/typst/issues/5826#issuecomment-2641000784
 
 #import "../test-utils.typ": *
 
