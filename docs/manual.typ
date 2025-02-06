@@ -2,8 +2,8 @@
 #import "/src/lib.typ" as alexandria
 
 #let package-meta = toml("/typst.toml").package
-#let date = none
-// #let date = datetime(year: ..., month: ..., day: ...)
+// #let date = none
+#let date = datetime(year: 2025, month: 2, day: 6)
 
 #show: manual(
   title: "Alexandria",

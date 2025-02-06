@@ -16,3 +16,10 @@ docs/*
 !docs/*.pdf
 gallery/*
 !gallery/*.pdf
+
+# ignore plugin-related files
+.cargo
+plugin
+target
+Cargo.lock
+Cargo.toml
