@@ -22,7 +22,10 @@ To add this package to your project, use this:
 )
 ```
 
-![Example](./thumbnail.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./thumbnail-dark.png">
+  <img src="./thumbnail-light.png">
+</picture>
 
 ## Usage
 

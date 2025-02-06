@@ -1,9 +1,14 @@
 #import "/src/lib.typ" as alexandria: *
 
+#let theme = sys.inputs.at("theme", default: "light")
+
 #set document(date: none)
 #set page(width: 16cm, height: auto, margin: 5mm, columns: 2)
 #set columns(gutter: 3mm)
 #set par(justify: true)
+
+#set page(fill: none)
+#set text(white) if theme == "dark"
 
 #show: alexandria(prefix: "x-", read: path => read(path))
 
@@ -39,22 +44,35 @@
 
 = Regular Bibliography
 
-#example-table(<netwok>)
+_IEEE style citations in German_
+
+#text(lang: "de", example-table(<netwok>))
+
+_APA style citations in English_
+
+#example-table(<netwok>, "normal", "prose", "full", "author", "year", style: "apa")
 
 #bibliography(
   "bibliography.bib",
   // full: true,
+  // style: "apa",
 )
 
 #colbreak()
 
 = Alexandria
 
-#example-table(<x-netwok>)
+_IEEE style citations in German_
+
+#text(lang: "de", example-table(<x-netwok>))
+
+_APA style citations in English_
+
+#example-table(<x-netwok>, "normal", "prose", "full", "author", "year", style: "apa")
 
 #bibliographyx(
   "bibliography.bib",
   title: "Bibliography",
   // full: true,
-  // style: "ieee",
+  // style: "apa",
 )

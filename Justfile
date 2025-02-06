@@ -12,7 +12,8 @@ doc:
 	for f in $(find gallery -maxdepth 1 -name '*.typ'); do \
 		typst compile "$f"; \
 	done
-	typst compile --ppi 250 "gallery/thumbnail.typ" "thumbnail.png"
+	typst compile --ppi 250 "gallery/thumbnail.typ" "thumbnail-light.png"
+	typst compile --ppi 250 --input theme=dark "gallery/thumbnail.typ" "thumbnail-dark.png"
 
 # run test suite
 test *args:
