@@ -1,8 +1,9 @@
 #import "template.typ" as template: *
 #import "/src/lib.typ" as alexandria
 
+#import "@preview/crudo:0.1.1"
+
 #let package-meta = toml("/typst.toml").package
-// #let date = none
 #let date = datetime(year: 2025, month: 2, day: 6)
 
 #show: manual(

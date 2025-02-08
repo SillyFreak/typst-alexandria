@@ -25,14 +25,16 @@
 /// #show: alexandria(prefix: "x-", read: path => read(path))
 /// ```
 ///
-/// - prefix (string): a prefix that identifies labels referring to Alexandria bibliographies.
-///   Bibliography entries will automatically get that prefix prepended.
-/// - read (function): pass ```typc path => read(path)``` into this parameter so that Alexandria can
-///   read your bibliography files.
 ///
 /// -> function
 #let alexandria(
+  /// a prefix that identifies labels referring to Alexandria bibliographies. Bibliography entries
+  /// will automatically get that prefix prepended.
+  /// -> string
   prefix: none,
+  /// pass ```typc path => read(path)``` into this parameter so that Alexandria can read your
+  /// bibliography files.
+  /// -> function
   read: none,
 ) = body => {
   import "state.typ": *
@@ -78,21 +80,22 @@
 /// )
 /// ```
 ///
-/// - path (string, array): The path to the bibliography file.
-/// - prefix (string, auto): The prefix for which reference labels should be provided and citations
-///   should be processed.
-/// - title (none, content, auto): The title of the bibliography. Note that `auto` is currently not
-///   supported.
-/// - full (boolean): Whether to render the full bibliography or only the references that are used
-///   in the document. Note that `true` is currently not supported.
-/// - style (string): The style of the bibliography.
-///
 /// -> content
 #let bibliographyx(
+  /// The path to the bibliography file.
+  /// -> string | array
   path,
+  /// The prefix for which reference labels should be provided and citations should be processed.
+  /// -> string | auto
   prefix: auto,
+  /// The title of the bibliography. Note that `auto` is currently not supported.
+  /// -> none | content | auto
   title: auto,
+  /// Whether to render the full bibliography or only the references that are used in the document.
+  /// -> boolean
   full: false,
+  /// The style of the bibliography.
+  /// -> string
   style: "ieee",
 ) = {
   import "state.typ": *

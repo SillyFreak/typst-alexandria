@@ -4,25 +4,25 @@ export TYPST_ROOT := root
 
 [private]
 default:
-	@just --list --unsorted
+  @just --list --unsorted
 
 # generate manual
 doc:
-	typst compile docs/manual.typ docs/manual.pdf
-	for f in $(find gallery -maxdepth 1 -name '*.typ'); do \
-		typst compile "$f"; \
-	done
-	typst compile --ppi 250 "gallery/thumbnail.typ" "thumbnail-light.png"
-	typst compile --ppi 250 --input theme=dark "gallery/thumbnail.typ" "thumbnail-dark.png"
+  typst compile docs/manual.typ docs/manual.pdf
+  typst compile docs/thumbnail.typ thumbnail-light.svg
+  typst compile --input theme=dark docs/thumbnail.typ thumbnail-dark.svg
+  for f in $(find gallery -maxdepth 1 -name '*.typ'); do \
+    typst compile "$f"; \
+  done
 
 # run test suite
 test *args:
-	cargo test
-	tt run {{ args }}
+  cargo test
+  tt run {{ args }}
 
 # update test cases
 update *args:
-	tt update {{ args }}
+  tt update {{ args }}
 
 # build the parser WASM plugin
 plugin:

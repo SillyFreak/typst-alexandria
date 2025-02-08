@@ -1,9 +1,8 @@
 // adapted from https://github.com/Mc-Zen/tidy/blob/98612b847da41ffb0d1dc26fa250df5c17d50054/docs/template.typ
 // licensed under the MIT license
 
-#import "@preview/tidy:0.3.0"
-#import "@preview/codly:1.0.0"
-#import "@preview/crudo:0.1.1"
+#import "@preview/tidy:0.4.1"
+#import "@preview/codly:1.2.0"
 
 #import "man-style.typ"
 
@@ -92,6 +91,7 @@
   show: codly.codly-init
   show raw.where(block: true): set text(size: .9em)
   show raw.where(block: true): pad.with(x: 4%)
+  codly.codly(fill: white)
 
   body
 }
@@ -145,7 +145,7 @@
     block(align(right, text(raw(filename))), width: 100%, inset: 5pt)
     v(1pt, weak: true)
     move(dx: -1pt, line(length: 100% + 2pt, stroke: 1pt + rgb("#239DAE")))
-        v(1pt, weak: true)
+    v(1pt, weak: true)
     pad(x: -4.3%, code)
   }
 ))
@@ -163,7 +163,7 @@
         inset: 20pt,
       )
       show: align.with(left)
-    block(breakable: false, body)
+      block(breakable: false, body)
     }
   )
 }

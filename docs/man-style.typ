@@ -1,8 +1,5 @@
 // adapted from https://github.com/Mc-Zen/tidy/blob/v0.3.0/src/styles/minimal.typ
 
-#import "@preview/tidy:0.3.0"
-#import tidy.utilities: *
-
 // ==== internal utilities
 
 #let mono = text.with(font: "DejaVu Sans Mono", size: 0.85em, weight: 340)
@@ -55,15 +52,15 @@
 }
 
 #let preview-block(no-codly: true, ..args) = {
-    import "@preview/codly:1.0.0"
+  import "template.typ": codly
 
-    show: if no-codly { codly.no-codly } else { it => it }
-    block(
-      stroke: 0.5pt + luma(200),
-      radius: preview-radius,
-      ..args
-    )
-  }
+  show: if no-codly { codly.no-codly } else { it => it }
+  block(
+    stroke: 0.5pt + luma(200),
+    radius: preview-radius,
+    ..args
+  )
+}
 
 // ==== functions required from styles
 
@@ -85,15 +82,17 @@
   grid(
     columns: (1fr,) * 3,
     column-gutter: 0.5em,
-    ..entries.chunks(calc.ceil(entries.len() / 3)).map(entries => {
-      block(
-        fill: gray.lighten(80%),
-        width: 100%,
-        inset: (y: 0.6em),
-        radius: radius,
-        list(..entries)
-      )
-    }),
+    ..if entries.len() != 0 {
+      entries.chunks(calc.ceil(entries.len() / 3)).map(entries => {
+        block(
+          fill: gray.lighten(80%),
+          width: 100%,
+          inset: (y: 0.6em),
+          radius: radius,
+          list(..entries)
+        )
+      })
+    },
   )
 }
 
@@ -107,6 +106,9 @@
 #let show-function(
   fn, style-args,
 ) = {
+  import "template.typ": tidy
+  import tidy.utilities: *
+
   block(breakable: style-args.break-param-descriptions, {
     let parameter-list = (style-args.style.show-parameter-list)(fn, style-args)
     let lbl = if style-args.enable-cross-references {
@@ -187,6 +189,9 @@
 #let show-variable(
   var, style-args,
 ) = {
+  import "template.typ": tidy
+  import tidy.utilities: *
+
   signature-block(breakable: style-args.break-param-descriptions, {
     let var-signature = mono-fn(
       var.name,

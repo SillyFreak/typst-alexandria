@@ -1,14 +1,14 @@
 #import "/src/lib.typ" as alexandria: *
 
+#set page(height: auto, margin: 5mm, fill: none)
+
+// style thumbnail for light and dark theme
 #let theme = sys.inputs.at("theme", default: "light")
-
-#set document(date: none)
-#set page(width: 16cm, height: auto, margin: 5mm, columns: 2)
-#set columns(gutter: 3mm)
-#set par(justify: true)
-
-#set page(fill: none)
 #set text(white) if theme == "dark"
+
+#set page(columns: 2)
+#set columns(gutter: 6mm)
+#set par(justify: true)
 
 #show: alexandria(prefix: "x-", read: path => read(path))
 
