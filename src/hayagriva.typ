@@ -7,8 +7,11 @@
   locale,
   citations,
 ) = {
+  // Typst 0.13: `cbor.decode` is deprecated, directly pass bytes to `cbor` instead
+  let decode = if sys.version < version(0, 13, 0) { cbor.decode } else { cbor }
+
   let config = cbor.encode((sources: sources, full: full, style: style, locale: locale, citations: citations))
-  cbor.decode(_p.read(config))
+  decode(_p.read(config))
 }
 
 #let render(body) = {
