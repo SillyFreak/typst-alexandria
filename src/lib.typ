@@ -17,7 +17,7 @@
   context link(key, hayagriva.render(get-citation(prefix, index)))
 }
 
-/// This configuration function should be called as a function at the beginning of the document.
+/// This configuration function should be called as a show rule at the beginning of the document.
 /// The function makes sure that `ref()` and `cite()` commands can refer to Alexandria's custom
 /// bibliography entries and stores configuration for use by @@bibliographyx().
 ///
