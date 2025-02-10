@@ -45,11 +45,11 @@
   citations.keys().first()
 }
 
-#let set-bibliography(prefix, setter) = {
+#let set-bibliography(prefix, hayagriva) = {
   let citations = config.final().citations.at(prefix)
   bibliographies.update(x => {
     if x.at(prefix) == none {
-      x.at(prefix) = setter(citations)
+      x.at(prefix) = (prefix: prefix, ..hayagriva(citations))
     }
     x
   })
