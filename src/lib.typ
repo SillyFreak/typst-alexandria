@@ -90,7 +90,8 @@
   /// Whether to render the full bibliography or only the references that are used in the document.
   /// -> boolean
   full: false,
-  /// The style of the bibliography.
+  /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style]
+  /// or a file name that is read by the `read()` function registered via @@alexandria().
   /// -> string
   style: "ieee",
 ) = {
