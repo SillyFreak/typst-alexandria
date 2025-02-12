@@ -59,7 +59,7 @@ The example on the next page demonstrates some of these. If you find additional 
 
 #pagebreak(weak: true)
 
-= Example -- native Typst version (APA)
+= Example -- native Typst version (APA) <ex-native>
 
 #[
   For further information on pirate and quark organizations, see @arrgh @quark.
@@ -78,7 +78,7 @@ The example on the next page demonstrates some of these. If you find additional 
   )
 ]
 
-= Example -- Alexandria version (APA)
+= Example -- Alexandria version (APA) <ex-apa>
 
 #[
   #import alexandria: *
@@ -101,7 +101,7 @@ The example on the next page demonstrates some of these. If you find additional 
   )
 ]
 
-= Example -- Alexandria version (IEEE)
+= Example -- Alexandria version (IEEE) <ex-ieee>
 
 #[
   #import alexandria: *
@@ -122,6 +122,97 @@ The example on the next page demonstrates some of these. If you find additional 
     full: true,
     style: "ieee",
   )
+]
+
+#pagebreak(weak: true)
+
+= Splitting bibliographies
+
+The previous three examples showed using Alexandria to render three separate bibliographies for different parts of a document: @ex-native[Example] used the native bibliography, @ex-apa[Example] used Alexandria to show APA style references, and @ex-ieee[Example] showed IEEE style. Particularly, with IEEE, all references are numbered and multiple separate Alexandria bibliographies would reuse the same 1-based numbering.
+
+This approach is thus not suitable for multiple bibliographies that serve the same regions of a document. For this purpose, Alexandria also supports splitting the _loading_ and _rendering_ of a bibliography, giving you the opportunity to preprocess the bibliography entries. Instead of calling #ref-fn("bibliographyx()") directly, you'd use #ref-fn("load-bibliography()") followed by #ref-fn("get-bibliography()") and #ref-fn("render-bibliography()").
+
+An example could look like this:
+
+#crudo.join(
+  main: -1,
+  crudo.map(
+    ```typ
+    #import "@preview/NAME:VERSION": *
+    ```,
+    line => line.replace("NAME", package-meta.name).replace("VERSION", package-meta.version),
+  ),
+  ```typ
+  #show: alexandria(prefix: "x-", read: path => read(path))
+
+  ...
+
+  // load the bibliography so that the data is available to citations and rendering
+  #load-bibliography("bibliography.bib")
+
+  #context {
+    // get the bibliography items
+    let (references, ..rest) =  get-bibliography("x-")
+
+    // render the bibliography
+    render-bibliography(
+      title: [Bibliography],
+      (
+        // instead of giving it all references, only consider non-book references
+        references: references.filter(x => x.details.type != "book"),
+        // `render-bibliography()` also needs the non-reference information
+        // that was returned by `get-bibliography()`
+        ..rest,
+      ),
+    )
+
+    // render the rest of the bibliography
+    // (this could also be somewhere else in the document)
+    render-bibliography(
+      title: [Books],
+      (
+        references: references.filter(x => x.details.type == "book"),
+        ..rest,
+      ),
+    )
+  }
+  ```
+)
+
+= Example -- Splitting a bibliography <ex-split>
+
+Here is a rendered example of using this approach. You can see how the single call to #ref-fn("load-bibliography()") results in the entries using distinct numbers.
+
+#[
+  #import alexandria: *
+  #show: alexandria(prefix: "z-", read: path => read(path))
+
+  #load-bibliography(
+    "bibliography.bib",
+    prefix: "z-",
+    full: true,
+  )
+
+  #set heading(offset: 1)
+  #context {
+    let (references, ..rest) =  get-bibliography("z-")
+
+    render-bibliography(
+      title: [Bibliography],
+      (
+        references: references.filter(x => x.details.type != "book"),
+        ..rest,
+      ),
+    )
+
+    render-bibliography(
+      title: [Books],
+      (
+        references: references.filter(x => x.details.type == "book"),
+        ..rest,
+      ),
+    )
+  }
 ]
 
 #pagebreak(weak: true)
