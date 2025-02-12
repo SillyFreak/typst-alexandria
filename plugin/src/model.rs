@@ -45,6 +45,7 @@ pub struct Entry {
     pub key: String,
     pub prefix: Option<Content>,
     pub reference: Content,
+    pub details: hayagriva::Entry,
 }
 
 #[derive(Debug, Clone, PartialEq)]

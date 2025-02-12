@@ -151,10 +151,16 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             let prefix = reference.first_field.map(Content::Child);
             let reference = Content::Children(false, reference.content);
 
+            let details = entries
+                .get(&key)
+                .cloned()
+                .expect("key has been found before but not anymore");
+
             Entry {
                 key,
                 prefix,
                 reference,
+                details,
             }
         })
         .collect();

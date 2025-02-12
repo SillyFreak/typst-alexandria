@@ -1,4 +1,4 @@
-#import "/src/lib.typ" as alexandria: *
+#import "/src/lib.typ": *
 
 #let citations(..lbls) = for lbl in lbls.pos() [
 
@@ -23,3 +23,5 @@
 #let x-test-citations = citations(<x-tolkien54>, <x-distress>)
 
 #let x-bib(..args) = bibliographyx("bibliography.bib", ..args)
+
+#import "/src/lib.typ" as alexandria
