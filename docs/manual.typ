@@ -183,6 +183,8 @@ An example could look like this:
 
 Here is a rendered example of using this approach. You can see how the single call to #ref-fn("load-bibliography()") results in the entries using distinct numbers.
 
+Note how all references are rendered once, although in a different presentation from usual. This is generally a requirement for citations being able to refer to their corresponding reference's label. In this particular case, this is not a concern since there are no citations and references were rendered due to the `full` option, but in general this is a concern.
+
 #[
   #import alexandria: *
   #show: alexandria(prefix: "z-", read: path => read(path))
