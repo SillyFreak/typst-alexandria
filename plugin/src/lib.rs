@@ -24,6 +24,17 @@ use util::*;
 #[cfg(target_arch = "wasm32")]
 wasm_minimal_protocol::initiate_protocol!();
 
+#[cfg_attr(target_arch = "wasm32", wasm_func)]
+pub fn names() -> Result<Vec<u8>, String> {
+    let names = ArchivedStyle::all()
+        .iter()
+        .map(|style| style.names().into_iter().copied())
+        .flatten()
+        .collect::<Vec<_>>();
+    let output = cbor_encode(&names).map_err_to_string()?;
+    Ok(output)
+}
+
 static LOCALES: LazyLock<Vec<citationberg::Locale>> = LazyLock::new(hayagriva::archive::locales);
 
 #[cfg_attr(target_arch = "wasm32", wasm_func)]

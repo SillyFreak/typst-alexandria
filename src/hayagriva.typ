@@ -1,5 +1,12 @@
 #let _p = plugin("alexandria.wasm")
 
+#let names = {
+  // Typst 0.13: `cbor.decode` is deprecated, directly pass bytes to `cbor` instead
+  let decode = if sys.version < version(0, 13, 0) { cbor.decode } else { cbor }
+
+  decode(_p.names())
+}
+
 #let read(
   sources,
   full,
