@@ -112,11 +112,18 @@
       assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
     }
 
+    let style = csl-to-string(style)
+    if style in hayagriva.names {
+      style = (built-in: style)
+    } else {
+      style = (custom: read(style))
+    }
+
     let locale = locale()
     set-bibliography(prefix, citations => hayagriva.read(
       path.map(path => (path: path, content: read(path))),
       full,
-      csl-to-string(style),
+      style,
       locale,
       citations,
     ))

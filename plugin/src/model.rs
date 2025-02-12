@@ -9,7 +9,7 @@ use serde::{
 pub struct Config {
     pub sources: Vec<Source>,
     pub full: bool,
-    pub style: String,
+    pub style: Style,
     pub locale: hayagriva::citationberg::LocaleCode,
     pub citations: Vec<Citation>,
 }
@@ -19,6 +19,13 @@ pub struct Config {
 pub struct Source {
     pub path: String,
     pub content: String,
+}
+
+#[derive(Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub enum Style {
+    BuiltIn(String),
+    Custom(String),
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]

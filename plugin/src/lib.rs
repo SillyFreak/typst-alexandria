@@ -94,9 +94,13 @@ fn read_libraries(sources: &[Source]) -> Result<IndexMap<String, hayagriva::Entr
 fn read_impl(config: Config) -> Result<Bibliography, String> {
     let entries = read_libraries(&config.sources)?;
 
-    let style =
-        ArchivedStyle::by_name(&config.style).ok_or(format!("Unknown style: {}", config.style))?;
-    let citationberg::Style::Independent(style) = style.get() else {
+    let style = match config.style {
+        Style::BuiltIn(name) => ArchivedStyle::by_name(&name)
+            .ok_or(format!("Unknown style: {}", name))?
+            .get(),
+        Style::Custom(source) => citationberg::Style::from_xml(&source).map_err_to_string()?,
+    };
+    let citationberg::Style::Independent(style) = style else {
         return Err("style is not an IndependentStyle".to_string());
     };
 
@@ -213,7 +217,7 @@ mod tests {
                 content: bib.to_string(),
             }],
             full: true,
-            style: "ieee".to_string(),
+            style: Style::BuiltIn("ieee".to_string()),
             locale: hayagriva::citationberg::LocaleCode::en_us(),
             citations: vec![],
         })
