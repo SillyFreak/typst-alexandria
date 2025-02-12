@@ -4,7 +4,7 @@
 #import "@preview/crudo:0.1.1"
 
 #let package-meta = toml("/typst.toml").package
-#let date = datetime(year: 2025, month: 2, day: 6)
+#let date = datetime(year: 2025, month: 2, day: 12)
 
 #show: manual(
   title: "Alexandria",

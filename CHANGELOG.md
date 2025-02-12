@@ -26,6 +26,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.1.1] - 2025-02-12
+
+### Added
+- `load-bibliography` that stores bib data for later retrieval
+- `get-bibliography` that retrieves the data
+- `render-bibliography` that renders the bib data
+- add details (type, title, author, ...) to data available for bibliography users
+- add support for custom CSL styles loaded from files
+
+### Fixed
+- fixed a deprecation warning when running Typst 0.13
+- split bibliographyx into load, get and render parts
+
 ## [0.1.0] - 2025-02-06
 
 ### Added
@@ -39,4 +52,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 [Unreleased]: https://github.com/SillyFreak/typst-alexandria/compare/v0.1.0...HEAD
+[0.1.1]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.1
 [0.1.0]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.0
