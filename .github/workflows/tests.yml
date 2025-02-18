@@ -29,9 +29,22 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install just and tytanic
+        if: ${{ !contains(matrix.typst-version.tytanic, '-rc') }}
         uses: taiki-e/install-action@v2
         with:
           tool: just,tytanic@${{ matrix.typst-version.tytanic }}
+
+      - name: Install just
+        if: ${{ contains(matrix.typst-version.tytanic, '-rc') }}
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Install tytanic
+        uses: taiki-e/cache-cargo-install-action@v2
+        if: ${{ contains(matrix.typst-version.tytanic, '-rc') }}
+        with:
+          tool: tytanic@${{ matrix.typst-version.tytanic }}
 
       - name: Setup typst
         id: setup-typst
