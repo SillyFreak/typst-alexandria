@@ -1,4 +1,4 @@
-#import "@preview/alexandria:0.1.0": *
+#import "@preview/alexandria:0.1.1": *
 
 #set document(date: none)
 #set page(height: auto, margin: 8mm)
