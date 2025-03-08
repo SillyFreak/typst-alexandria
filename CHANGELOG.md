@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.1.2] - 2025-03-08
+
+### Added
+- support for `bytes` as a bib or csl file parameter, to be up-to-date with Typst 0.13's `bibliography()` API
+
 ## [0.1.1] - 2025-02-12
 
 ### Added
@@ -51,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for IEEE and APA references in English and German (APA tests are deactivated to to something that's probably a Typst bug)
 
 
-[Unreleased]: https://github.com/SillyFreak/typst-alexandria/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/SillyFreak/typst-alexandria/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.2
 [0.1.1]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.1
 [0.1.0]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.0
