@@ -45,23 +45,31 @@ pub fn read(config: &[u8]) -> Result<Vec<u8>, String> {
     Ok(output)
 }
 
-fn read_library(source: &Source) -> Result<Library, String> {
-    let Source { path, content } = source;
-    let ext = Path::new(&path)
-        .extension()
-        .and_then(OsStr::to_str)
-        .unwrap_or_default();
-    let library = match ext.to_lowercase().as_str() {
-        "yml" | "yaml" => hayagriva::io::from_yaml_str(&content)
-            .map_err(|err| format!("failed to parse YAML ({err})"))?,
-        "bib" => hayagriva::io::from_biblatex_str(&content)
-            .map_err(|_errors| format!("failed to parse BibLaTeX file ({path})"))?,
-        _ => return Err("unknown bibliography format (must be .yml/.yaml or .bib)".to_string()),
-    };
-    Ok(library)
+fn read_library(source: &Resource) -> Result<Library, String> {
+    let Resource { path, data } = source;
+    if let Some(path) = path {
+        let ext = Path::new(&path)
+            .extension()
+            .and_then(OsStr::to_str)
+            .unwrap_or_default();
+        let library = match ext.to_lowercase().as_str() {
+            "yml" | "yaml" => hayagriva::io::from_yaml_str(&data)
+                .map_err(|err| format!("failed to parse YAML ({err})"))?,
+            "bib" => hayagriva::io::from_biblatex_str(&data)
+                .map_err(|_errors| format!("failed to parse BibLaTeX file ({path})"))?,
+            _ => return Err("unknown bibliography format (must be .yml/.yaml or .bib)".to_string()),
+        };
+        Ok(library)
+    } else {
+        hayagriva::io::from_yaml_str(data)
+            .or_else(|_| hayagriva::io::from_biblatex_str(data))
+            .map_err(|_errors| {
+                "failed to parse bibliography (must be .yml/.yaml or .bib)".to_string()
+            })
+    }
 }
 
-fn read_libraries(sources: &[Source]) -> Result<IndexMap<String, hayagriva::Entry>, String> {
+fn read_libraries(sources: &[Resource]) -> Result<IndexMap<String, hayagriva::Entry>, String> {
     let mut map = IndexMap::new();
     let mut duplicates = Vec::new();
 
@@ -212,9 +220,9 @@ mod tests {
         }
         "#;
         read_impl(Config {
-            sources: vec![Source {
-                path: "bibliography.bib".to_string(),
-                content: bib.to_string(),
+            sources: vec![Resource {
+                path: Some("bibliography.bib".to_string()),
+                data: bib.to_string(),
             }],
             full: true,
             style: Style::BuiltIn("ieee".to_string()),

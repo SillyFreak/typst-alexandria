@@ -7,7 +7,7 @@ use serde::{
 #[derive(Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Config {
-    pub sources: Vec<Source>,
+    pub sources: Vec<Resource>,
     pub full: bool,
     pub style: Style,
     pub locale: hayagriva::citationberg::LocaleCode,
@@ -16,9 +16,9 @@ pub struct Config {
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub struct Source {
-    pub path: String,
-    pub content: String,
+pub struct Resource {
+    pub path: Option<String>,
+    pub data: String,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]

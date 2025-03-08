@@ -1,5 +1,8 @@
 #import "/src/lib.typ": *
 
+#let bib-file = read("bibliography.bib", encoding: none)
+#let csl-file = read("ieee.csl", encoding: none)
+
 #let citations(..lbls) = for lbl in lbls.pos() [
 
   #ref(lbl)
@@ -16,7 +19,6 @@
 #let test-citations = citations(<tolkien54>, <distress>)
 
 #let bib(..args) = bibliography("bibliography.bib", ..args)
-
 
 #let x-alexandria = alexandria(prefix: "x-", read: path => read(path))
 

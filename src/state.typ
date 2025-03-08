@@ -9,7 +9,17 @@
   x
 })
 
-#let get-read() = config.get().read
+#let read(data) = {
+  if type(data) == bytes {
+    (path: none, data: str(data))
+  } else if type(data) == str {
+    let read = config.get().read
+    assert.ne(read, none, message: "Alexandria is not configured. Make sure to use `#show: alexandria(...)`")
+    (path: data, data: read(data))
+  } else {
+    panic("parameter must be a path string or data bytes")
+  }
+}
 
 #let register-prefix(..prefixes) = {
   assert.eq(prefixes.named().len(), 0)

@@ -25,6 +25,10 @@
 /// #show: alexandria(prefix: "x-", read: path => read(path))
 /// ```
 ///
+/// The `read` parameter kann be skipped, in which case file paths can not be used for bibliography
+/// files and custom styles. This means you will need to pass `bytes` values to @@bibliographyx()
+/// and @@load-bibliography() instead of paths.
+///
 /// -> function
 #let alexandria(
   /// a prefix that identifies labels referring to Alexandria bibliographies. Bibliography entries
@@ -36,14 +40,15 @@
   /// -> function
   read: none,
 ) = body => {
+  let read-value = read
   import "state.typ": *
 
   assert.ne(prefix, none, message: "usage without a prefix is not yet supported")
-  assert.ne(read, none, message: "read is required; provide a function `path => read(path)`")
+  // assert.ne(read-value, none, message: "read is required; provide a function `path => read(path)`")
 
   let match(key) = prefix == none or str(key).starts-with(prefix)
 
-  set-read(read)
+  set-read(read-value)
   register-prefix(prefix)
 
   show ref: it => {
@@ -81,8 +86,8 @@
 ///
 /// -> content
 #let load-bibliography(
-  /// The path to the bibliography file.
-  /// -> string | array
+  /// The path to or binary file contents of the bibliography file(s).
+  /// -> string | bytes | array
   path,
   /// The prefix for which reference labels should be provided and citations should be processed.
   /// -> string | auto
@@ -90,9 +95,10 @@
   /// Whether to render the full bibliography or only the references that are used in the document.
   /// -> boolean
   full: false,
-  /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style]
-  /// or a file name that is read by the `read()` function registered via @@alexandria().
-  /// -> string
+  /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
+  /// a file name that is read by the `read()` function registered via @@alexandria(), or binary
+  /// file contents of a csl file.
+  /// -> string | bytes
   style: "ieee",
 ) = {
   import "state.typ": *
@@ -104,25 +110,24 @@
   }
 
   context {
-    let read = get-read()
-    assert.ne(read, none, message: "Alexandria is not configured. Make sure to use `#show: alexandria(...)`")
-
     let prefix = prefix
     if prefix == auto {
       prefix = get-only-prefix()
       assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
     }
 
+    let sources = path.map(path => read(path))
+
     let style = csl-to-string(style)
     if style in hayagriva.names {
       style = (built-in: style)
     } else {
-      style = (custom: read(style))
+      style = (custom: read(style).data)
     }
 
     let locale = locale()
     set-bibliography(prefix, citations => hayagriva.read(
-      path.map(path => (path: path, content: read(path))),
+      sources,
       full,
       style,
       locale,
@@ -251,8 +256,8 @@
 ///
 /// -> content
 #let bibliographyx(
-  /// The path to the bibliography file.
-  /// -> string | array
+  /// The path to or binary file contents of the bibliography file(s).
+  /// -> string | bytes | array
   path,
   /// The prefix for which reference labels should be provided and citations should be processed.
   /// -> string | auto
@@ -264,7 +269,7 @@
   /// -> boolean
   full: false,
   /// The style of the bibliography.
-  /// -> string
+  /// -> string | bytes
   style: "ieee",
 ) = {
   import "state.typ": *
