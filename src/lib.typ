@@ -168,12 +168,17 @@
 ///
 /// -> dict
 #let get-bibliography(
-  /// The prefix for which the bibliography should be retrieved.
-  /// -> string
+  /// The prefix for which the bibliography should be retrieved, or `auto` if there is only one
+  /// bibliography and that one should be retrieved.
+  /// -> string | auto
   prefix,
 ) = {
   import "state.typ": *
 
+  if prefix == auto {
+    prefix = get-only-prefix()
+    assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
+  }
   get-bibliography(prefix)
 }
 
@@ -272,17 +277,9 @@
   /// -> string | bytes
   style: "ieee",
 ) = {
-  import "state.typ": *
-
   load-bibliography(path, prefix: prefix, full: full, style: style)
 
   context {
-    let prefix = prefix
-    if prefix == auto {
-      prefix = get-only-prefix()
-      assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
-    }
-
     let bib = get-bibliography(prefix)
     render-bibliography(bib, title: title)
   }
