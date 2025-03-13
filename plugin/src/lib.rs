@@ -122,6 +122,13 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             ));
         };
 
+        let locator = citation
+            .has_supplement
+            .then_some(hayagriva::SpecificLocator(
+                citationberg::taxonomy::Locator::Custom,
+                hayagriva::LocatorPayload::Transparent,
+            ));
+
         let citation_style = citation
             .style
             .map(|style| {
@@ -137,7 +144,13 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             .unwrap_or(&style);
 
         driver.citation(CitationRequest::new(
-            vec![CitationItem::new(entry, None, None, false, citation.form)],
+            vec![CitationItem::new(
+                entry,
+                locator,
+                None,
+                false,
+                citation.form,
+            )],
             citation_style,
             Some(citation.locale),
             &LOCALES,
@@ -219,16 +232,23 @@ mod tests {
             publisher={Automattic Inc.}
         }
         "#;
-        read_impl(Config {
+        let bibliography = read_impl(Config {
             sources: vec![Resource {
-                path: Some("bibliography.bib".to_string()),
+                path: None,
                 data: bib.to_string(),
             }],
             full: true,
             style: Style::BuiltIn("ieee".to_string()),
-            locale: hayagriva::citationberg::LocaleCode::en_us(),
-            citations: vec![],
+            locale: citationberg::LocaleCode::en_us(),
+            citations: vec![Citation {
+                key: "netwok".to_string(),
+                form: None,
+                style: None,
+                has_supplement: true,
+                locale: citationberg::LocaleCode::en_us(),
+            }],
         })
         .unwrap();
+        cbor_encode(&bibliography).unwrap();
     }
 }

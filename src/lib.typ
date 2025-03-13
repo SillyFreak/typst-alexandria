@@ -1,20 +1,25 @@
 #import "hayagriva.typ"
 
 
-#let citation(prefix, key, form: "normal", style: auto) = {
+#let citation(prefix, key, form: "normal", style: auto, supplement: auto) = {
   import "state.typ": *
   import "internal.typ": *
 
   assert(str(key).starts-with(prefix), message: "Can only refer to an entry with the given prefix.")
 
   let index = get-citation-index(prefix)
+  let has-supplement = supplement not in (none, auto)
   context add-citation(prefix, (
     key: str(key).slice(prefix.len()),
     form: form,
     ..if style != auto { (style: csl-to-string(style)) },
+    has-supplement: has-supplement,
     locale: locale(),
   ))
-  context link(key, hayagriva.render(get-citation(prefix, index)))
+  context link(key, hayagriva.render(
+    get-citation(prefix, index),
+    ..if has-supplement { (supplement,) },
+  ))
 }
 
 /// This configuration function should be called as a show rule at the beginning of the document.
@@ -56,7 +61,7 @@
       return it
     }
 
-    citation(prefix, it.target, form: cite.form, style: cite.style)
+    citation(prefix, it.target, form: cite.form, style: cite.style, supplement: it.supplement)
   }
 
   show cite: it => {
@@ -64,7 +69,7 @@
       return it
     }
 
-    context citation(prefix, it.key, form: it.form, style: it.style)
+    context citation(prefix, it.key, form: it.form, style: it.style, supplement: it.supplement)
   }
 
   body

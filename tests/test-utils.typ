@@ -14,6 +14,16 @@
   #cite(lbl, form: "author")
 
   #cite(lbl, form: "year")
+
+  #ref(lbl, supplement: [a])
+
+  #cite(lbl, form: "prose", supplement: [a])
+
+  #cite(lbl, form: "full", supplement: [a])
+
+  #cite(lbl, form: "author", supplement: [a])
+
+  #cite(lbl, form: "year", supplement: [a])
 ]
 
 #let test-citations = citations(<tolkien54>, <distress>)

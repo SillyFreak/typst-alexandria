@@ -1,4 +1,4 @@
-use hayagriva::{CitePurpose, ElemChild, ElemChildren, Formatted};
+use hayagriva::{CitePurpose, ElemChild, ElemChildren, Formatted, Formatting};
 use serde::{
     ser::{SerializeSeq, SerializeStructVariant},
     Deserialize, Deserializer, Serialize, Serializer,
@@ -35,6 +35,7 @@ pub struct Citation {
     #[serde(deserialize_with = "deser_cite_purpose")]
     pub form: Option<CitePurpose>,
     pub style: Option<String>,
+    pub has_supplement: bool,
     pub locale: hayagriva::citationberg::LocaleCode,
 }
 
@@ -66,6 +67,15 @@ impl Serialize for Content {
     where
         S: Serializer,
     {
+        let serialize_formatting = |s: &mut S::SerializeStructVariant, formatting: &Formatting| {
+            s.serialize_field("font-style", &formatting.font_style)?;
+            s.serialize_field("font-variant", &formatting.font_variant)?;
+            s.serialize_field("font-weight", &formatting.font_weight)?;
+            s.serialize_field("text-decoration", &formatting.text_decoration)?;
+            s.serialize_field("vertical-align", &formatting.vertical_align)?;
+            Ok(())
+        };
+
         match self {
             Self::Children(is_citation, ElemChildren(children)) => {
                 let mut seq = serializer.serialize_seq(Some(children.len()))?;
@@ -83,11 +93,7 @@ impl Serialize for Content {
             Self::Child(ElemChild::Text(Formatted { text, formatting })) => {
                 let mut s = serializer.serialize_struct_variant("content", 0, "text", 6)?;
                 s.serialize_field("text", text)?;
-                s.serialize_field("font-style", &formatting.font_style)?;
-                s.serialize_field("font-variant", &formatting.font_variant)?;
-                s.serialize_field("font-weight", &formatting.font_weight)?;
-                s.serialize_field("text-decoration", &formatting.text_decoration)?;
-                s.serialize_field("vertical-align", &formatting.vertical_align)?;
+                serialize_formatting(&mut s, formatting)?;
                 s.end()
             }
             Self::Child(ElemChild::Elem(elem)) => {
@@ -106,8 +112,11 @@ impl Serialize for Content {
                 s.serialize_field("url", url)?;
                 s.end()
             }
-            Self::Child(ElemChild::Transparent { .. }) => {
-                todo!()
+            Self::Child(ElemChild::Transparent { cite_idx, format }) => {
+                let mut s = serializer.serialize_struct_variant("content", 4, "transparent", 6)?;
+                s.serialize_field("cite-idx", cite_idx)?;
+                serialize_formatting(&mut s, format)?;
+                s.end()
             }
         }
     }
