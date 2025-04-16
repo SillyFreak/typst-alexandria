@@ -32,10 +32,6 @@
     children.all(x => x.func() in (ref, cite)),
     message: "citegroup expected a body consisting only of citations and references",
   )
-  let keys = children.map(x => {
-    if x.func() == ref { x.target }
-    else if x.func() == cite { x.key }
-  })
 
   start-citation-group()
   // don't use the body since that may contain whitespace
@@ -49,10 +45,14 @@
     }
 
     let (index, ..) = get-citation-info(prefix)
+    let (body, supplements) = get-citation(prefix, index)
     hayagriva.render(
-      get-citation(prefix, index),
-      keys: keys,
-      // ..if has-supplement { (supplement,) },
+      body,
+      keys: children.map(x => {
+        if x.func() == ref { x.target }
+        else if x.func() == cite { x.key }
+      }),
+      ..supplements,
     )
   }
   end-citation-group()
@@ -72,20 +72,22 @@
   assert(str(key).starts-with(prefix), message: "Can only refer to an entry with the given prefix.")
 
   let (index, group) = get-citation-info(prefix)
-  let has-supplement = supplement not in (none, auto)
   context add-citation(prefix, (
     key: str(key).slice(prefix.len()),
     form: form,
     ..if style != auto { (style: csl-to-string(style)) },
-    has-supplement: has-supplement,
+    supplement: supplement,
     locale: locale(),
   ))
   if not group {
-    context hayagriva.render(
-      get-citation(prefix, index),
-      keys: (key,),
-      ..if has-supplement { (supplement,) },
-    )
+    context {
+      let (body, supplements) = get-citation(prefix, index)
+      hayagriva.render(
+        body,
+        keys: (key,),
+        ..supplements,
+      )
+    }
   }
 }
 
@@ -128,7 +130,11 @@
       return it
     }
 
-    citation(prefix, it.target, form: cite.form, style: cite.style, supplement: it.supplement)
+    citation(
+      prefix, it.target,
+      form: cite.form, style: cite.style,
+      supplement: if it.supplement != auto { it.supplement },
+    )
   }
 
   show cite: it => {
@@ -136,7 +142,11 @@
       return it
     }
 
-    context citation(prefix, it.key, form: it.form, style: it.style, supplement: it.supplement)
+    context citation(
+      prefix, it.key,
+      form: it.form, style: it.style,
+      supplement: it.supplement,
+    )
   }
 
   body
@@ -203,7 +213,10 @@
       full,
       style,
       locale,
-      citations,
+      citations.map(group => group.map(((supplement, ..citation)) => {
+        let has-supplement = supplement != none
+        (..citation, has-supplement: has-supplement)
+      })),
     ))
   }
 }

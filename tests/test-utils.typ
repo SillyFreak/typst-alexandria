@@ -27,7 +27,7 @@
 ]
 
 #let test-citations = [
-  see@tolkien54 #cite(<distress>)
+  see@tolkien54 #cite(<distress>, supplement: [a])
 
   #citations(<tolkien54>, <distress>)
 ]
@@ -37,7 +37,7 @@
 #let x-alexandria = alexandria(prefix: "x-", read: path => read(path))
 
 #let x-test-citations = [
-  see#citegroup[@x-tolkien54 #cite(<x-distress>)]
+  see#citegroup[@x-tolkien54 #cite(<x-distress>, supplement: [a])]
 
   #citations(<x-tolkien54>, <x-distress>)
 ]

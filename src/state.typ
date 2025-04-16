@@ -112,4 +112,10 @@
 }
 
 #let get-bibliography(prefix) = bibliographies.final().at(prefix)
-#let get-citation(prefix, index) = get-bibliography(prefix).citations.at(index)
+#let get-citation(prefix, index) = {
+  let body = get-bibliography(prefix).citations.at(index)
+  let supplements = config.final().prefixes.at(prefix).citations.at(index)
+    .map(citation => citation.supplement)
+
+  (body: body, supplements: supplements)
+}
