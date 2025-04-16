@@ -1,5 +1,69 @@
 #import "hayagriva.typ"
 
+/// Creates a group of collapsed citations. The citations are given as regular content, e.g.
+/// ```typ
+/// #citegroup[@a @b]
+/// ```
+/// Only citations, references and space may appear in the body. Whitespace is ignored, and the rest
+/// is treated as a group of citations to collapse. It is an error to have non-alexandria references
+/// or references from different bibliographies in a citation group.
+///
+/// -> content
+#let citegroup(
+  /// The prefix for which reference labels should be provided and citations should be processed.
+  /// -> string | auto
+  prefix: auto,
+  /// The body, containing at least one but usually more citations
+  /// -> content
+  body,
+) = {
+  import "state.typ": *
+
+  assert(
+    type(body) == content and body.func() in ([].func(), ref, cite),
+    message: "citegroup expected one or more citations in the form of content",
+  )
+  let children = if body.func() == [].func() {
+    body.children
+  } else {
+    (body,)
+  }.filter(x => x.func() != [ ].func())
+  assert(
+    children.all(x => x.func() in (ref, cite)),
+    message: "citegroup expected a body consisting only of citations and references",
+  )
+  let keys = children.map(x => {
+    if x.func() == ref { x.target }
+    else if x.func() == cite { x.key }
+  })
+
+  start-citation-group()
+  // don't use the body since that may contain whitespace
+  // the citations themselves won't render as anything, so they're fine
+  children.join()
+  context {
+    let prefix = prefix
+    if prefix == auto {
+      prefix = get-only-prefix()
+      assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
+    }
+
+    let (index, ..) = get-citation-info(prefix)
+    hayagriva.render(
+      get-citation(prefix, index),
+      keys: keys,
+      // ..if has-supplement { (supplement,) },
+    )
+  }
+  end-citation-group()
+}
+
+// #citegroup[]
+// #citegroup[@a]
+// #citegroup[#cite(<a>)]
+// #citegroup[@a @b#cite(<c>)]
+// #citegroup[*a*]
+
 
 #let citation(prefix, key, form: "normal", style: auto, supplement: auto) = {
   import "state.typ": *
@@ -7,7 +71,7 @@
 
   assert(str(key).starts-with(prefix), message: "Can only refer to an entry with the given prefix.")
 
-  let index = get-citation-index(prefix)
+  let (index, group) = get-citation-info(prefix)
   let has-supplement = supplement not in (none, auto)
   context add-citation(prefix, (
     key: str(key).slice(prefix.len()),
@@ -16,11 +80,13 @@
     has-supplement: has-supplement,
     locale: locale(),
   ))
-  context hayagriva.render(
-    get-citation(prefix, index),
-    keys: (key,),
-    ..if has-supplement { (supplement,) },
-  )
+  if not group {
+    context hayagriva.render(
+      get-citation(prefix, index),
+      keys: (key,),
+      ..if has-supplement { (supplement,) },
+    )
+  }
 }
 
 /// This configuration function should be called as a show rule at the beginning of the document.
