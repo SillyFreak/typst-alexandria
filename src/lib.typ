@@ -16,10 +16,11 @@
     has-supplement: has-supplement,
     locale: locale(),
   ))
-  context link(key, hayagriva.render(
+  context hayagriva.render(
     get-citation(prefix, index),
+    keys: (key,),
     ..if has-supplement { (supplement,) },
-  ))
+  )
 }
 
 /// This configuration function should be called as a show rule at the beginning of the document.

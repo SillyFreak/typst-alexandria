@@ -21,7 +21,7 @@
   decode(_p.read(config))
 }
 
-#let render(body, ..transparent-contents) = {
+#let render(body, keys: none, ..transparent-contents) = {
   assert.eq(transparent-contents.named().len(), 0, message: "no named arguments allowed")
   let transparent-contents = transparent-contents.pos()
   let formatted(fmt) = it => {
@@ -52,11 +52,21 @@
       body.text
     } else if "elem" in body {
       let body = body.elem
+      show: it => {
+        if "entry" in body.meta {
+          assert.ne(keys, none, message: "Alexandria: internal error: citation keys are missing")
+          assert(body.meta.entry < keys.len(), message: "Alexandria: internal error: unmatched key in citegroup")
+          let entry = keys.at(body.meta.entry)
+          it = link(entry, it)
+        }
+        it
+      }
       // TODO handle body.display when present
       inner(body.children)
     } else if "link" in body {
       let body = body.link
-      link(body.url, inner(body.text))
+      show: formatted(body)
+      link(body.url, body.text)
     } else if "transparent" in body {
       let body = body.transparent
       show: formatted(body)
