@@ -47,7 +47,7 @@
 }
 
 #let add-citation(prefix, citation) = config.update(x => {
-  x.prefixes.at(prefix).citations.push(citation)
+  x.prefixes.at(prefix).citations.push((citation,))
   x
 })
 

@@ -114,23 +114,38 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
 
     let styles = Arena::new();
     let mut driver = BibliographyDriver::new();
-    for citation in config.citations {
-        let Some(entry) = entries.get(&citation.key) else {
-            return Err(format!(
-                "key `{}` does not exist in the bibliography",
-                citation.key
-            ));
-        };
+    for group in config.citations {
+        let mut items = Vec::with_capacity(group.len());
 
-        let locator = citation
-            .has_supplement
-            .then_some(hayagriva::SpecificLocator(
-                citationberg::taxonomy::Locator::Custom,
-                hayagriva::LocatorPayload::Transparent,
-            ));
+        for citation in &group {
+            let Some(entry) = entries.get(&citation.key) else {
+                return Err(format!(
+                    "key `{}` does not exist in the bibliography",
+                    citation.key
+                ));
+            };
 
-        let citation_style = citation
+            let locator = citation
+                .has_supplement
+                .then_some(hayagriva::SpecificLocator(
+                    citationberg::taxonomy::Locator::Custom,
+                    hayagriva::LocatorPayload::Transparent,
+                ));
+
+            items.push(CitationItem::new(
+                entry,
+                locator,
+                None,
+                false,
+                citation.form,
+            ));
+        }
+
+        let first = group.into_iter().next().ok_or("empty cite group")?;
+
+        let citation_style = first
             .style
+            .as_ref()
             .map(|style| {
                 let style =
                     ArchivedStyle::by_name(&style).ok_or(format!("Unknown style: {}", style))?;
@@ -144,15 +159,9 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             .unwrap_or(&style);
 
         driver.citation(CitationRequest::new(
-            vec![CitationItem::new(
-                entry,
-                locator,
-                None,
-                false,
-                citation.form,
-            )],
+            items,
             citation_style,
-            Some(citation.locale),
+            Some(first.locale),
             &LOCALES,
             None,
         ));
@@ -240,13 +249,13 @@ mod tests {
             full: true,
             style: Style::BuiltIn("ieee".to_string()),
             locale: citationberg::LocaleCode::en_us(),
-            citations: vec![Citation {
+            citations: vec![vec![Citation {
                 key: "netwok".to_string(),
                 form: None,
                 style: None,
                 has_supplement: true,
                 locale: citationberg::LocaleCode::en_us(),
-            }],
+            }]],
         })
         .unwrap();
         cbor_encode(&bibliography).unwrap();
