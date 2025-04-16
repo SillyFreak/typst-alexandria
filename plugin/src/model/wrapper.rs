@@ -110,8 +110,9 @@ impl Serialize for SerWrapper<&ElemChild> {
                 serializer.serialize_newtype_variant("content", 2, "markup", markup)
             }
             ElemChild::Link { text, url } => {
-                let mut s = serializer.serialize_struct_variant("content", 3, "link", 2)?;
-                s.serialize_field("text", &SerWrapper(&ElemChild::Text(text.clone())))?;
+                let mut s = serializer.serialize_struct_variant("content", 3, "link", 7)?;
+                s.serialize_field("text", &text.text)?;
+                serialize_formatting(&mut s, &text.formatting)?;
                 s.serialize_field("url", url)?;
                 s.end()
             }

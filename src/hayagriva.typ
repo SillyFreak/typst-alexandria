@@ -56,7 +56,8 @@
       inner(body.children)
     } else if "link" in body {
       let body = body.link
-      link(body.url, inner(body.text))
+      show: formatted(body)
+      link(body.url, body.text)
     } else if "transparent" in body {
       let body = body.transparent
       show: formatted(body)
