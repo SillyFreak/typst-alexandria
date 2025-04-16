@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use hayagriva::{ElemChild, ElemChildren, Formatted, Formatting};
+use hayagriva::{ElemChild, ElemChildren, ElemMeta, Formatted, Formatting};
 use serde::{
     ser::{SerializeSeq, SerializeStructVariant},
     Serialize, Serializer,
@@ -100,10 +100,10 @@ impl Serialize for SerWrapper<&ElemChild> {
                 s.end()
             }
             ElemChild::Elem(elem) => {
-                let mut s = serializer.serialize_struct_variant("content", 1, "elem", 2)?;
+                let mut s = serializer.serialize_struct_variant("content", 1, "elem", 3)?;
                 s.serialize_field("children", &SerWrapper((false, &elem.children)))?;
                 s.serialize_field("display", &elem.display)?;
-                // s.serialize_field("meta", &elem.meta)?;
+                s.serialize_field("meta", &SerWrapper(elem.meta))?;
                 s.end()
             }
             ElemChild::Markup(markup) => {
@@ -121,6 +121,49 @@ impl Serialize for SerWrapper<&ElemChild> {
                 s.serialize_field("cite-idx", cite_idx)?;
                 serialize_formatting(&mut s, format)?;
                 s.end()
+            }
+        }
+    }
+}
+
+impl Serialize for SerWrapper<Option<ElemMeta>> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let Self(meta) = *self;
+
+        ser_wrapped_option(&meta, serializer)
+    }
+}
+
+impl Serialize for SerWrapper<&ElemMeta> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let Self(meta) = *self;
+
+        match meta {
+            ElemMeta::Names => serializer.serialize_unit_variant("meta", 0, "names"),
+            ElemMeta::Date => serializer.serialize_unit_variant("meta", 1, "date"),
+            ElemMeta::Text => serializer.serialize_unit_variant("meta", 2, "text"),
+            ElemMeta::Number => serializer.serialize_unit_variant("meta", 3, "number"),
+            ElemMeta::Label => serializer.serialize_unit_variant("meta", 4, "label"),
+            ElemMeta::CitationNumber => {
+                serializer.serialize_unit_variant("meta", 5, "citation-number")
+            }
+            ElemMeta::Name(name_variable, index) => {
+                let mut s = serializer.serialize_struct_variant("meta", 6, "name", 2)?;
+                s.serialize_field("name-variable", name_variable)?;
+                s.serialize_field("index", index)?;
+                s.end()
+            }
+            ElemMeta::Entry(index) => {
+                serializer.serialize_newtype_variant("meta", 7, "entry", index)
+            }
+            ElemMeta::CitationLabel => {
+                serializer.serialize_unit_variant("meta", 8, "citation-label")
             }
         }
     }
