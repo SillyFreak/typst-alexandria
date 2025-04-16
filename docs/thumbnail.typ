@@ -16,12 +16,15 @@
   key,
   style: auto,
   ..forms,
+  collapsed: none,
 ) = {
   assert.eq(forms.named().len(), 0)
   let forms = forms.pos()
   if forms.len() == 0 {
     forms = ("plain", "normal", "prose", "full", "author", "year")
   }
+
+  set cite(style: style) if style != auto
 
   table(
     columns: (auto, 1fr),
@@ -35,10 +38,17 @@
       let citation = if form == "plain" {
         ref(key)
       } else {
-        cite(key, form: form, style: style)
+        cite(key, form: form)
       }
       ([#label:], citation)
-    }
+    },
+
+    ..if collapsed != none {
+      (
+        [Collapsed:],
+        collapsed,
+      )
+    },
   )
 }
 
@@ -50,7 +60,7 @@ _IEEE style citations in German_
 
 _APA style citations in English_
 
-#example-table(<netwok>, "normal", "prose", "full", "author", "year", style: "apa")
+#example-table(<netwok>, "normal", "prose", "full", "author", "year", style: "apa", collapsed: [@netwok @distress])
 
 #bibliography(
   "bibliography.bib",
@@ -68,7 +78,7 @@ _IEEE style citations in German_
 
 _APA style citations in English_
 
-#example-table(<x-netwok>, "normal", "prose", "full", "author", "year", style: "apa")
+#example-table(<x-netwok>, "normal", "prose", "full", "author", "year", style: "apa", collapsed: citegroup[@x-netwok @x-distress])
 
 #bibliographyx(
   "bibliography.bib",
