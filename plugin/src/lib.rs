@@ -184,8 +184,8 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
         .into_iter()
         .map(|reference| {
             let key = reference.key;
-            let prefix = reference.first_field.map(Content::Child);
-            let reference = Content::Children(false, reference.content);
+            let prefix = reference.first_field;
+            let reference = reference.content;
 
             let details = entries
                 .get(&key)
@@ -203,7 +203,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
     let citations = rendered
         .citations
         .into_iter()
-        .map(|item| Content::Children(true, item.citation))
+        .map(|item| item.citation)
         .collect();
 
     let hanging_indent = rendered_bib.hanging_indent;
