@@ -7,6 +7,8 @@
 
   #ref(lbl)
 
+  #cite(lbl, form: none)
+
   #cite(lbl, form: "prose")
 
   #cite(lbl, form: "full")
@@ -16,6 +18,8 @@
   #cite(lbl, form: "year")
 
   #ref(lbl, supplement: [a])
+
+  #cite(lbl, form: none, supplement: [a])
 
   #cite(lbl, form: "prose", supplement: [a])
 
