@@ -26,13 +26,21 @@
   #cite(lbl, form: "year", supplement: [a])
 ]
 
-#let test-citations = citations(<tolkien54>, <distress>)
+#let test-citations = [
+  see@tolkien54 #cite(<distress>, supplement: [a])
+
+  #citations(<tolkien54>, <distress>)
+]
 
 #let bib(..args) = bibliography("bibliography.bib", ..args)
 
 #let x-alexandria = alexandria(prefix: "x-", read: path => read(path))
 
-#let x-test-citations = citations(<x-tolkien54>, <x-distress>)
+#let x-test-citations = [
+  see#citegroup[@x-tolkien54 #cite(<x-distress>, supplement: [a])]
+
+  #citations(<x-tolkien54>, <x-distress>)
+]
 
 #let x-bib(..args) = bibliographyx("bibliography.bib", ..args)
 

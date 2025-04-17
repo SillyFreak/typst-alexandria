@@ -1,5 +1,6 @@
 #let config = state("__alexandria-config", (
-  citations: (:),
+  prefixes: (:),
+  group-state: "none",
   read: none,
 ))
 #let bibliographies = state("__alexandria-bibliographies", (:))
@@ -27,7 +28,9 @@
 
   config.update(x => {
     for prefix in prefixes {
-      x.citations.insert(prefix, ())
+      x.prefixes.insert(prefix, (
+        citations: (),
+      ))
     }
     x
   })
@@ -40,30 +43,79 @@
   })
 }
 
-#let get-citation-index(prefix) = config.get().citations.at(prefix).len()
+#let get-citation-info(prefix) = {
+  let (prefixes, group-state) = config.get()
+  let index = prefixes.at(prefix).citations.len()
+  if group-state == "open" {
+    // if a citegroup is open, the index is not the next one to be inserted,
+    // but the already existing last one
+    index -= 1
+  }
+  let group = group-state != "none"
+  (index: index, group: group)
+}
+
+#let start-citation-group() = config.update(x => {
+  assert.eq(
+    x.group-state, "none",
+    message: "can't start a citation group while one is open",
+  )
+  x.group-state = "initial"
+  x
+})
 
 #let add-citation(prefix, citation) = config.update(x => {
-  x.citations.at(prefix).push(citation)
+  if x.group-state == "none" {
+    // add a new citation group with only one element
+    x.prefixes.at(prefix).citations.push((citation,))
+  } else if x.group-state == "initial" {
+    x.group-state = "open"
+    // start the citation group with this citation
+    x.prefixes.at(prefix).citations.push((citation,))
+  } else {
+    // add a citation to the currently open group
+    x.prefixes.at(prefix).citations.last().push(citation)
+  }
+  x
+})
+
+#let end-citation-group() = config.update(x => {
+  assert.ne(
+    x.group-state, "none",
+    message: "can't end a citation group while none is open",
+  )
+  // TODO doesn't work, because the citations are only later added through a show rule
+  // assert.ne(
+  //   x.group-state, "initial",
+  //   message: "citation group must not be empty",
+  // )
+  x.group-state = "none"
   x
 })
 
 #let get-only-prefix() = {
-  let citations = config.get().citations
-  if citations.len() != 1 {
+  let prefixes = config.get().prefixes
+  if prefixes.len() != 1 {
     return none
   }
-  citations.keys().first()
+  prefixes.keys().first()
 }
 
 #let set-bibliography(prefix, hayagriva) = {
-  let citations = config.final().citations.at(prefix)
+  let config = config.final().prefixes.at(prefix)
   bibliographies.update(x => {
     if x.at(prefix) == none {
-      x.at(prefix) = (prefix: prefix, ..hayagriva(citations))
+      x.at(prefix) = (prefix: prefix, ..hayagriva(config.citations))
     }
     x
   })
 }
 
 #let get-bibliography(prefix) = bibliographies.final().at(prefix)
-#let get-citation(prefix, index) = get-bibliography(prefix).citations.at(index)
+#let get-citation(prefix, index) = {
+  let body = get-bibliography(prefix).citations.at(index)
+  let supplements = config.final().prefixes.at(prefix).citations.at(index)
+    .map(citation => citation.supplement)
+
+  (body: body, supplements: supplements)
+}

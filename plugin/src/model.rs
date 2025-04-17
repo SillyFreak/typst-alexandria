@@ -10,7 +10,7 @@ pub struct Config {
     pub full: bool,
     pub style: Style,
     pub locale: hayagriva::citationberg::LocaleCode,
-    pub citations: Vec<Citation>,
+    pub citations: Vec<Vec<Citation>>,
 }
 
 #[derive(Deserialize, Debug, Clone, PartialEq)]

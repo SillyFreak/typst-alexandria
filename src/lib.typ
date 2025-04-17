@@ -1,26 +1,29 @@
 #import "hayagriva.typ"
 
-
 #let citation(prefix, key, form: "normal", style: auto, supplement: auto) = {
   import "state.typ": *
   import "internal.typ": *
 
   assert(str(key).starts-with(prefix), message: "Can only refer to an entry with the given prefix.")
 
-  let index = get-citation-index(prefix)
-  let has-supplement = supplement not in (none, auto)
+  let (index, group) = get-citation-info(prefix)
   context add-citation(prefix, (
     key: str(key).slice(prefix.len()),
     form: form,
     ..if style != auto { (style: csl-to-string(style)) },
-    has-supplement: has-supplement,
+    supplement: supplement,
     locale: locale(),
   ))
-  context hayagriva.render(
-    get-citation(prefix, index),
-    keys: (key,),
-    ..if has-supplement { (supplement,) },
-  )
+  if not group {
+    context {
+      let (body, supplements) = get-citation(prefix, index)
+      hayagriva.render(
+        body,
+        keys: (key,),
+        ..supplements,
+      )
+    }
+  }
 }
 
 /// This configuration function should be called as a show rule at the beginning of the document.
@@ -62,7 +65,11 @@
       return it
     }
 
-    citation(prefix, it.target, form: cite.form, style: cite.style, supplement: it.supplement)
+    citation(
+      prefix, it.target,
+      form: cite.form, style: cite.style,
+      supplement: if it.supplement != auto { it.supplement },
+    )
   }
 
   show cite: it => {
@@ -70,10 +77,72 @@
       return it
     }
 
-    context citation(prefix, it.key, form: it.form, style: it.style, supplement: it.supplement)
+    context citation(
+      prefix, it.key,
+      form: it.form, style: it.style,
+      supplement: it.supplement,
+    )
   }
 
   body
+}
+
+/// Creates a group of collapsed citations. The citations are given as regular content, e.g.
+/// ```typ
+/// #citegroup[@a @b]
+/// ```
+/// Only citations, references and space may appear in the body. Whitespace is ignored, and the rest
+/// is treated as a group of citations to collapse. It is an error to have non-alexandria
+/// references, or references from different bibliographies, in the same citation group.
+///
+/// -> content
+#let citegroup(
+  /// The prefix for which reference labels should be provided and citations should be processed.
+  /// -> string | auto
+  prefix: auto,
+  /// The body, containing at least one but usually more citations
+  /// -> content
+  body,
+) = {
+  import "state.typ": *
+
+  assert(
+    type(body) == content and body.func() in ([].func(), ref, cite),
+    message: "citegroup expected one or more citations in the form of content",
+  )
+  let children = if body.func() == [].func() {
+    body.children
+  } else {
+    (body,)
+  }.filter(x => x.func() != [ ].func())
+  assert(
+    children.all(x => x.func() in (ref, cite)),
+    message: "citegroup expected a body consisting only of citations and references",
+  )
+
+  start-citation-group()
+  // don't use the body since that may contain whitespace
+  // the citations themselves won't render as anything, so they're fine
+  children.join()
+  context {
+    let prefix = prefix
+    if prefix == auto {
+      prefix = get-only-prefix()
+      assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
+    }
+
+    let (index, ..) = get-citation-info(prefix)
+    let (body, supplements) = get-citation(prefix, index)
+    hayagriva.render(
+      body,
+      keys: children.map(x => {
+        if x.func() == ref { x.target }
+        else if x.func() == cite { x.key }
+      }),
+      ..supplements,
+    )
+  }
+  end-citation-group()
 }
 
 /// Loads an additional bibliography. This reads the relevant bibliography file(s) and stores the
@@ -137,7 +206,10 @@
       full,
       style,
       locale,
-      citations,
+      citations.map(group => group.map(((supplement, ..citation)) => {
+        let has-supplement = supplement != none
+        (..citation, has-supplement: has-supplement)
+      })),
     ))
   }
 }
