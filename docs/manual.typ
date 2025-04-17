@@ -52,7 +52,6 @@ Some known limitations:
 
 - Alexandria citations are converted to links and are thus affected by `link` rules.
 - Native bibliographies have `numbering: none` applied to its title, while Alexandrias' haven't. `show bibliography: set heading(...)` also won't work on them.
-- Adjacent citations aren't collapsed.
 - Citations that are shown as footnotes are not supported yet.
 
 The example on the next page demonstrates some of these. If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
@@ -84,7 +83,7 @@ The example on the next page demonstrates some of these. If you find additional 
   #import alexandria: *
   #show: alexandria(prefix: "x-", read: path => read(path))
 
-  For further information on pirate and quark organizations, see @x-arrgh @x-quark.
+  For further information on pirate and quark organizations, see #citegroup(prefix: "x-")[@x-arrgh @x-quark].
   #cite(<x-distress>, form: "author") discusses bibliographical distress.
 
   #text(lang: "de")[
@@ -107,7 +106,7 @@ The example on the next page demonstrates some of these. If you find additional 
   #import alexandria: *
   #show: alexandria(prefix: "y-", read: path => read(path))
 
-  For further information on pirate and quark organizations, see @y-arrgh @y-quark.
+  For further information on pirate and quark organizations, see #citegroup(prefix: "y-")[@y-arrgh @y-quark].
   #cite(<y-distress>, form: "author") discusses bibliographical distress.
 
   #text(lang: "de")[
