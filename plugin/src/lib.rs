@@ -136,8 +136,8 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
                 entry,
                 locator,
                 None,
-                false,
-                citation.form,
+                citation.form.is_none(),
+                citation.form.unwrap_or(None),
             ));
         }
 

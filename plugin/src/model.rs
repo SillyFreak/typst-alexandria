@@ -32,7 +32,7 @@ pub enum Style {
 pub struct Citation {
     pub key: String,
     #[serde(deserialize_with = "deser_cite_purpose")]
-    pub form: Option<CitePurpose>,
+    pub form: Option<Option<CitePurpose>>,
     pub style: Option<String>,
     pub has_supplement: bool,
     pub locale: hayagriva::citationberg::LocaleCode,
@@ -58,7 +58,7 @@ pub struct Entry {
     pub details: hayagriva::Entry,
 }
 
-fn deser_cite_purpose<'de, D>(deserializer: D) -> Result<Option<CitePurpose>, D::Error>
+fn deser_cite_purpose<'de, D>(deserializer: D) -> Result<Option<Option<CitePurpose>>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -69,10 +69,17 @@ where
     struct CitePurposeVisitor;
 
     impl<'de> Visitor<'de> for CitePurposeVisitor {
-        type Value = Option<CitePurpose>;
+        type Value = Option<Option<CitePurpose>>;
 
         fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
             formatter.write_str("a valid citation form: normal, prose, full, author, or year")
+        }
+
+        fn visit_none<E>(self) -> Result<Self::Value, E>
+        where
+            E: de::Error,
+        {
+            Ok(None)
         }
 
         fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
@@ -80,15 +87,15 @@ where
             E: de::Error,
         {
             match value {
-                "normal" => Ok(None),
-                "prose" => Ok(Some(CitePurpose::Prose)),
-                "full" => Ok(Some(CitePurpose::Full)),
-                "author" => Ok(Some(CitePurpose::Author)),
-                "year" => Ok(Some(CitePurpose::Year)),
+                "normal" => Ok(Some(None)),
+                "prose" => Ok(Some(Some(CitePurpose::Prose))),
+                "full" => Ok(Some(Some(CitePurpose::Full))),
+                "author" => Ok(Some(Some(CitePurpose::Author))),
+                "year" => Ok(Some(Some(CitePurpose::Year))),
                 _ => Err(de::Error::invalid_value(de::Unexpected::Str(value), &self)),
             }
         }
     }
 
-    deserializer.deserialize_str(CitePurposeVisitor)
+    deserializer.deserialize_any(CitePurposeVisitor)
 }
