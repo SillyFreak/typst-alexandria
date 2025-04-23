@@ -26,6 +26,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.2.0] - 2025-04-23
+
+### Added
+- `citegroup` added, which allows creating collapsed citations
+
+### Changed
+- the structure in which config data is stored has changed: the state now has `prefixes.at(..).citations` instead of `prefixes.citations.at(..)`. If you use the (internal) functions of the `alexandria.hayagriva` module directly, this is a BREAKING change.
+- `get-citation-index()` is now `get-citation-info()` and returns a dictionary with `index` and `group`. If you use the (internal) functions of the `alexandria.hayagriva` module directly, this is a BREAKING change.
+- serialization inside the plugin has been simplified
+- during serialization, link bodies are no longer wrapped into text elements. If you use the (internal) functions of the `alexandria.hayagriva` module directly, this is a BREAKING change.
+
+### Fixed
+- links now don't span whole citations, but only the parts that would be links in vanilla Typst
+- `cite(form: none)` is now supported
+
 ## [0.1.3] - 2025-03-13
 
 ### Added
@@ -67,7 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for IEEE and APA references in English and German (APA tests are deactivated to to something that's probably a Typst bug)
 
 
-[Unreleased]: https://github.com/SillyFreak/typst-alexandria/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/SillyFreak/typst-alexandria/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.2.0
 [0.1.3]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.3
 [0.1.2]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.2
 [0.1.1]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.1
