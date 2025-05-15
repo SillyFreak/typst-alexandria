@@ -34,7 +34,7 @@
 /// #show: alexandria(prefix: "x-", read: path => read(path))
 /// ```
 ///
-/// The `read` parameter kann be skipped, in which case file paths can not be used for bibliography
+/// The `read` parameter can be skipped, in which case file paths can not be used for bibliography
 /// files and custom styles. This means you will need to pass `bytes` values to @@bibliographyx()
 /// and @@load-bibliography() instead of paths.
 ///
@@ -172,7 +172,7 @@
   full: false,
   /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
   /// a file name that is read by the `read()` function registered via @@alexandria(), or binary
-  /// file contents of a csl file.
+  /// file contents of a CSL file.
   /// -> string | bytes
   style: "ieee",
 ) = {
