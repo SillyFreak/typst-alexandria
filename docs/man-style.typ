@@ -2,6 +2,112 @@
 
 // ==== internal utilities
 
+// https://github.com/jneug/typst-mantys/blob/cb32c63394ef441eb6038d4090634c7d823b9e11/src/api/types.typ
+/// Dictionary of builtin types, mapping the types name to its actual type.
+#let _type-map = (
+  "auto": auto,
+  "none": none,
+  // foundations
+  arguments: arguments,
+  array: array,
+  bool: bool,
+  bytes: bytes,
+  content: content,
+  datetime: datetime,
+  decimal: decimal,
+  dictionary: dictionary,
+  duration: duration,
+  float: float,
+  function: function,
+  int: int,
+  label: label,
+  module: module,
+  regex: regex,
+  selector: selector,
+  string: str,
+  symbol: symbol,
+  type: type,
+  version: version,
+  // layout
+  alignment: alignment,
+  angle: angle,
+  direction: direction,
+  fraction: fraction,
+  length: length,
+  ratio: ratio,
+  relative: relative,
+  // visualize
+  color: color,
+  gradient: gradient,
+  stroke: stroke,
+  tiling: tiling,
+  // introspection
+  counter: counter,
+  location: location,
+  state: state,
+)
+/// Dictionary of allowed type aliases, like `dict` for `dictionary`.
+#let _type-aliases = (
+  boolean: "bool",
+  str: "string",
+  arr: "array",
+  dict: "dictionary",
+  integer: "int",
+  func: "function",
+)
+#let _type-link-map = (
+  "auto": "foundations/auto",
+  "none": "foundations/none",
+  // foundation
+  arguments: "foundations/arguments",
+  array: "foundations/array",
+  bool: "foundations/bool",
+  bytes: "foundations/bytes",
+  content: "foundations/content",
+  datetime: "foundations/datetime",
+  decimal: "foundations/decimal",
+  dictionary: "foundations/dictionary",
+  duration: "foundations/duration",
+  float: "foundations/float",
+  function: "foundations/function",
+  integer: "foundations/int",
+  label: "foundations/label",
+  module: "foundations/module",
+  regex: "foundations/regex",
+  selector: "foundations/selector",
+  string: "foundations/str",
+  symbol: "foundations/symbol",
+  type: "foundations/type",
+  version: "foundations/version",
+  // layout
+  alignment: "layout/alignment",
+  angle: "layout/angle",
+  direction: "layout/direction",
+  fraction: "layout/fraction",
+  length: "layout/length",
+  ratio: "layout/ratio",
+  relative: "layout/relative",
+  // visualize
+  color: "visualize/color",
+  gradient: "visualize/gradient",
+  stroke: "visualize/stroke",
+  tiling: "visualize/tiling",
+  // introspection
+  counter: "foundations/counter",
+  location: "foundations/location",
+  state: "foundations/state",
+)
+#let type-link(t, body) = {
+  if t in _type-aliases { t = _type-aliases.at(t) }
+  if t in _type-link-map {
+    link("https://typst.app/docs/reference/" + _type-link-map.at(t), body)
+  } else {
+    // probably a custom type
+    body
+  }
+}
+
+#let serif-font = "Libertinus Serif"
 #let mono = text.with(font: "DejaVu Sans Mono", size: 0.85em, weight: 340)
 #let name-fill = rgb("#1f2a63")
 #let signature-fill = rgb("#d8dbed")
@@ -51,14 +157,37 @@
   )
 }
 
-#let preview-block(no-codly: true, ..args) = {
+#let preview-block(body, no-codly: true, in-raw: true, ..args) = {
   import "template.typ": codly
 
   show: if no-codly { codly.no-codly } else { it => it }
+  set heading(numbering: none, outlined: false)
+  // counteract the font changes of raw blocks
+  set text(font: serif-font, size: 1em/0.96) if in-raw
+
   block(
+    pad(-2pt, body),
     stroke: 0.5pt + luma(200),
     radius: preview-radius,
     ..args
+  )
+}
+
+#let layout-example(..args) = {
+  import "template.typ": tidy, t4t
+  import tidy.show-example as example
+
+  example.default-layout-example(
+    code-block: (body, ..args) => {
+      // counteract the raw font size decrease of the template being applied twice
+      set text(size: 1em/0.9)
+      t4t.assert.no-pos(args)
+      let args = args.named()
+      _ = args.remove("inset", default: none)
+      block(pad(x: -4.3%, body), ..args)
+    },
+    preview-block: preview-block,
+    ..args,
   )
 }
 
@@ -99,7 +228,9 @@
 // Create beautiful, colored type box
 #let show-type(type, style-args: (:)) = {
   h(2pt)
-  box(outset: 2pt, fill: get-type-color(type), radius: 2pt, raw(type, lang: none))
+  type-link(type, {
+    box(outset: 2pt, fill: get-type-color(type), radius: 2pt, raw(type, lang: none))
+  })
   h(2pt)
 }
 
@@ -114,7 +245,7 @@
     let lbl = if style-args.enable-cross-references {
       label(style-args.label-prefix + fn.name + "()")
     }
-    [#parameter-list #lbl]
+    [#parameter-list#lbl]
   })
   pad(x: 0em, eval-docstring(fn.description, style-args))
 
@@ -133,11 +264,13 @@
       style-args,
       show-default: "default" in info,
       default: info.at("default", default: none),
+      function-name: style-args.label-prefix + fn.name,
     )
   })
 
   if args.len() != 0 {
-    [*#style-args.local-names.parameters:*]
+    let parameters-string = get-local-name("parameters", style-args: style-args)
+    [*#parameters-string:*]
     args.join()
   }
   v(4em, weak: true)
@@ -153,6 +286,9 @@
           args = args.filter(((arg-name, info)) => not arg-name.starts-with("_"))
         }
         args = args.map(((arg-name, info)) => {
+          if style-args.enable-cross-references and not (info.at("description", default: "") == "" and style-args.omit-empty-param-descriptions) {
+            arg-name = link(label(style-args.label-prefix + fn.name + "." + arg-name.trim(".")), arg-name)
+          }
           arg-name
           if "types" in info [: #show-types(info.types, style-args)]
         })
@@ -168,12 +304,16 @@
   name, types, content, style-args,
   show-default: false,
   default: none,
+  function-name: none,
 ) = block(
   breakable: style-args.break-param-descriptions,
   inset: 0pt, width: 100%,
   {
     set par(hanging-indent: 1em, first-line-indent: 0em)
-    mono(name)
+    let lbl = if function-name != none and style-args.enable-cross-references {
+      label(function-name + "." + name.trim("."))
+    }
+    [#mono(name)#lbl]
     [ (]
     show-types(types, style-args, joiner: [ #text(size: 0.6em)[or] ])
     if show-default [ \= #raw(lang: "typc", default)]
@@ -183,7 +323,12 @@
 )
 
 #let show-reference(label, name, style-args: none) = {
-  link(label, raw(name, lang: none))
+  let (name, args) = if name.ends-with("()") {
+    (name.slice(0, -2), ())
+  } else {
+    (name, none)
+  }
+  link(label, mono-fn(name, args: args))
 }
 
 #let show-variable(
@@ -207,133 +352,14 @@
   v(4em, weak: true)
 }
 
-// Adapted from https://github.com/Mc-Zen/tidy/blob/v0.3.0/src/show-example.typ
-// see discussion here: https://discord.com/channels/1054443721975922748/1296208677371379813
+#let show-example(no-codly: true, in-raw: true, ..args) = {
+  import "template.typ": tidy
+  import tidy.show-example as example
 
-/// Takes given code and both shows it and previews the result of its evaluation.
-///
-/// The code is by default shown in the language mode `lang: typc` (typst code)
-/// if no language has been specified. Code in typst markup language (`lang: typ`)
-/// is automatically evaluated in markup mode.
-///
-/// - code (raw): Raw object holding the example code.
-/// - scope (dictionary): Additional definitions to make available for the evaluated
-///          example code.
-/// - scale-preview (auto, ratio): How much to rescale the preview. If set to auto, the the preview is scaled to fit the box.
-/// - inherited-scope (dictionary): Definitions that are made available to the entire parsed
-///          module. This parameter is only used internally.
-#let show-example(
-  code,
-  dir: ltr,
-  scope: (:),
-  preamble: "",
-  ratio: 1,
-  scale-preview: auto,
-  mode: "code",
-  inherited-scope: (:),
-  code-block: block,
-  preview-block: preview-block,
-  col-spacing: 5pt,
-  ..options
-) = {
-  set raw(block: true)
-  let lang = if code.has("lang") { code.lang } else { "typc" }
-  if lang == "typ" {
-    mode = "markup"
-  }
-  if mode == "markup" and not code.has("lang") {
-    lang = "typ"
-  }
-  set raw(lang: lang)
-  if code.has("block") and code.block == false {
-    code = raw(code.text, lang: lang, block: true)
-  }
-
-  let preview = {
-    set heading(numbering: none, outlined: false)
-    [#eval(preamble + code.text, mode: mode, scope: scope + inherited-scope)]
-  }
-
-  let preview-outer-padding = 3pt
-  let preview-inner-padding = 5pt
-
-  show: if dir.axis() == "vertical" { pad.with(x: 4%) } else { it => it }
-
-  layout(size => {
-    let code-width
-    let preview-width
-
-    if dir.axis() == "vertical" {
-      code-width = size.width
-      preview-width = size.width
-    } else {
-      code-width = ratio / (ratio + 1) * size.width - 0.5 * col-spacing
-      preview-width = size.width - code-width - col-spacing
-    }
-
-    let available-preview-width = preview-width - 2 * (preview-outer-padding + preview-inner-padding)
-
-    let preview-size
-    let scale-preview = scale-preview
-
-    if scale-preview == auto {
-      preview-size = measure(preview)
-      assert(preview-size.width != 0pt, message: "The code example has a relative width. Please set `scale-preview` to a fixed ratio, e.g., `100%`")
-      scale-preview = calc.min(1, available-preview-width / preview-size.width) * 100%
-    } else {
-      preview-size = measure(block(preview, width: available-preview-width / (scale-preview / 100%)))
-    }
-
-    set par(hanging-indent: 0pt) // this messes up some stuff in case someone sets it
-
-
-    // We first measure this thing (code + preview) to find out which of the two has
-    // the larger height. Then we can just set the height for both boxes.
-    let arrangement(width: 100%, height: auto) = {
-      let code-block = code-block(
-        width: code-width,
-        height: height,
-        {
-          set text(size: .9em)
-          pad(x: -4.3%, code)
-        }
-      )
-      let preview-block = preview-block(
-        height: height,
-        width: preview-width,
-        inset: preview-outer-padding,
-        box(
-          width: 100%,
-          fill: white,
-          inset: preview-inner-padding,
-          scale(
-            scale-preview,
-            origin: top + left,
-            block(preview, height: preview-size.height, width: preview-size.width)
-          )
-        )
-      )
-
-      show: block.with(
-        width: width,
-        inset: 0pt,
-      )
-
-      grid(
-        ..if dir.axis() == "horizontal" {
-          (columns: 2, rows: 1, column-gutter: col-spacing)
-        } else {
-          (columns: 1, rows: 2, row-gutter: col-spacing)
-        },
-        ..if dir in (ltr, ttb) {
-          (code-block, preview-block)
-        } else {
-          (preview-block, code-block)
-        }
-      )
-    }
-    let height = if dir.axis() == "vertical" { auto }
-      else { measure(arrangement(width: size.width)).height }
-    arrangement(height: height)
-  })
+  example.show-example(
+    layout: layout-example.with(
+      preview-block: preview-block.with(no-codly: no-codly, in-raw: in-raw),
+    ),
+    ..args,
+  )
 }
