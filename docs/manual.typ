@@ -3,35 +3,33 @@
 
 #import "@preview/crudo:0.1.1"
 
-#let package-meta = toml("/typst.toml").package
-#let date = datetime(year: 2025, month: 4, day: 23)
-
 #show: manual(
+  package-meta: toml("/typst.toml").package,
   title: "Alexandria",
-  // subtitle: "...",
-  authors: package-meta.authors.map(a => a.split("<").at(0).trim()),
-  abstract: [
+  subtitle: [
     _Alexandria_ allows a single document to have multiple bibliographies.
   ],
-  url: package-meta.repository,
-  version: package-meta.version,
-  date: date,
-)
+  date: datetime(year: 2025, month: 4, day: 23),
 
-// the scope for evaluating expressions and documentation
-#let scope = (alexandria: alexandria)
+  // logo: rect(width: 5cm, height: 5cm),
+  // abstract: [
+  //   A PACKAGE for something
+  // ],
+
+  scope: (alexandria: alexandria),
+)
 
 = Introduction
 
 _Alexandria_ allows adding multiple bibliographies to the same document. Its two main functions are #ref-fn("alexandria()") and #ref-fn("bibliographyx()"). Typical usage would look something like this:
 
-#crudo.join(
+#context crudo.join(
   main: -1,
   crudo.map(
     ```typ
-    #import "@preview/NAME:VERSION": *
+    #import "PACKAGE": *
     ```,
-    line => line.replace("NAME", package-meta.name).replace("VERSION", package-meta.version),
+    line => line.replace("PACKAGE", package-import-spec()),
   ),
   ```typ
   #show: alexandria(prefix: "x-", read: path => read(path))
@@ -51,7 +49,7 @@ With this setup, you can use regular Typst citations (to keys starting with the 
 Some known limitations:
 
 - Alexandria citations are converted to links and are thus affected by `link` rules.
-- Native bibliographies have `numbering: none` applied to its title, while Alexandrias' haven't. `show bibliography: set heading(...)` also won't work on them.
+- Native bibliographies have `numbering: none` applied to its title, while Alexandrias' haven't. ```typc show bibliography: set heading(...)``` also won't work on them.
 - Citations that are shown as footnotes are not supported yet -- see #link("https://github.com/SillyFreak/typst-alexandria/issues/11")[issue \#11].
 
 The example on the next page demonstrates some of these. If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
@@ -133,13 +131,13 @@ This approach is thus not suitable for multiple bibliographies that serve the sa
 
 An example could look like this:
 
-#crudo.join(
+#context crudo.join(
   main: -1,
   crudo.map(
     ```typ
-    #import "@preview/NAME:VERSION": *
+    #import "PACKAGE": *
     ```,
-    line => line.replace("NAME", package-meta.name).replace("VERSION", package-meta.version),
+    line => line.replace("PACKAGE", package-import-spec()),
   ),
   ```typ
   #show: alexandria(prefix: "x-", read: path => read(path))
@@ -182,7 +180,7 @@ An example could look like this:
 
 Here is a rendered example of using this approach. You can see how the single call to #ref-fn("load-bibliography()") results in the entries using distinct numbers.
 
-Note how all references are rendered once, although in a different presentation from usual. This is generally a requirement for citations being able to refer to their corresponding reference's label. In this particular case, this is not a concern since there are no citations and references were rendered due to the `full` option, but in general this is a concern.
+Note how all references are rendered once, although in a different presentation from usual. This is generally a requirement for citations being able to refer to their corresponding reference's label. In this particular case, this is not a concern since there are no citations and references were rendered due to the #ref-fn("load-bibliography.full") option, but in general this is a concern.
 
 #[
   #import alexandria: *
@@ -224,5 +222,4 @@ Note how all references are rendered once, although in a different presentation 
   read("/src/lib.typ"),
   name: "alexandria",
   label-prefix: none,
-  scope: scope,
 )

@@ -91,8 +91,8 @@
 /// ```typ
 /// #citegroup[@a @b]
 /// ```
-/// Only citations, references and space may appear in the body. Whitespace is ignored, and the rest
-/// is treated as a group of citations to collapse. It is an error to have non-alexandria
+/// Only citations, references and spaces may appear in the body. Whitespace is ignored, and the
+/// rest is treated as a group of citations to collapse. It is an error to have non-alexandria
 /// references, or references from different bibliographies, in the same citation group.
 ///
 /// -> content
