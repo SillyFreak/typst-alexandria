@@ -21,7 +21,14 @@
 
 = Introduction
 
-_Alexandria_ allows adding multiple bibliographies to the same document. Its two main functions are #ref-fn("alexandria()") and #ref-fn("bibliographyx()"). Typical usage would look something like this:
+_Alexandria_ enables multiple bibliographies within the same Typst document.
+
+In _Alexandria_, each citation is associated with a _prefix_.
+#ref-fn("alexandria()") function declares a prefix, e.g. `"x-"`, for a group of bibliographical references.
+After this, you can use regular Typst citations, prepending the prefix to a bibliographic key to indicate that it refers to a specific group, e.g. `@x-quark` or `#cite(<x-netwok>)`.
+_Alexandria_'s #ref-fn("bibliographyx()") is the equivalent of the built-in `bibliography()` function for generating a bibliography limited to a specific prefix.
+
+Typical usage looks like this:
 
 #context crudo.join(
   main: -1,
@@ -33,30 +40,47 @@ _Alexandria_ allows adding multiple bibliographies to the same document. Its two
   ),
   ```typ
   #show: alexandria(prefix: "x-", read: path => read(path))
+  #show: alexandria(prefix: "y-", read: path => read(path))
 
-  ...
+  ... The text that references @x-quark and @x-netwok ...
 
   #bibliographyx(
     "bibliography.bib",
-    // title: auto is not yet supported so it needs to be specified
-    title: "Bibliography",
+    prefix: "x-",
+    title: "X Bibliography",
+  )
+
+  ... The section with references to @y-arggh and @y-distress ...
+
+  #bibliographyx(
+    "bibliography.bib",
+    prefix: "y-",
+    title: "Y Bibliography",
   )
   ```
 )
 
-With this setup, you can use regular Typst citations (to keys starting with the configured prefix) to cite entries in an Alexandria bibliography.
-
 Some known limitations:
 
-- Alexandria citations are converted to links and are thus affected by `link` rules.
-- Native bibliographies have `numbering: none` applied to its title, while Alexandrias' haven't. ```typc show bibliography: set heading(...)``` also won't work on them.
+- Internally, _Alexandria_ citations are converted to links and are thus affected by `link` rules.
+- Native bibliographies have ```typc numbering: none``` applied to its title, while _Alexandria_'s haven't.
+  ```typc show bibliography: set heading(...)``` also won't work on them.
 - Citations that are shown as footnotes are not supported yet -- see #link("https://github.com/SillyFreak/typst-alexandria/issues/11")[issue \#11].
 
-The example on the next page demonstrates some of these. If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
+If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
 
 #pagebreak(weak: true)
 
-= Example -- native Typst version (APA) <ex-native>
+= Separate bibliographies for document sections
+
+Below we demonstrate how to create separate bibliographies with independent numbering for different sections of a document:
+- @ex-native[Example] uses the native Typst bibliography
+- @ex-apa[Example] uses Alexandria to generate APA style references for all bibliographical entries from _bibliography.bib_ (```typc full: true```)
+- @ex-ieee[Example] shows a numbered IEEE style bibliography.
+
+== Example
+
+=== Native Typst (APA) <ex-native>
 
 #[
   For further information on pirate and quark organizations, see @arrgh @quark.
@@ -66,16 +90,15 @@ The example on the next page demonstrates some of these. If you find additional 
     Über den "Netzwok" ist in der Arbeit von #cite(<netwok>, form: "prose", style: "apa") zu lesen.
   ]
 
-  #set heading(offset: 1)
+  #set heading(offset: 3)
   #bibliography(
     "bibliography.bib",
     // title: "Bibliography",
-    full: true,
     style: "apa",
   )
 ]
 
-= Example -- Alexandria version (APA) <ex-apa>
+=== Alexandria (APA) <ex-apa>
 
 #[
   #import alexandria: *
@@ -88,7 +111,7 @@ The example on the next page demonstrates some of these. If you find additional 
     Über den "Netzwok" ist in der Arbeit von #cite(<x-netwok>, form: "prose", style: "ieee") zu lesen.
   ]
 
-  #set heading(offset: 1)
+  #set heading(offset: 3, numbering: none)
   #bibliographyx(
     "bibliography.bib",
     prefix: "x-",
@@ -98,7 +121,7 @@ The example on the next page demonstrates some of these. If you find additional 
   )
 ]
 
-= Example -- Alexandria version (IEEE) <ex-ieee>
+=== Alexandria (IEEE) <ex-ieee>
 
 #[
   #import alexandria: *
@@ -111,25 +134,29 @@ The example on the next page demonstrates some of these. If you find additional 
     Über den "Netzwok" ist in der Arbeit von #cite(<y-netwok>, form: "prose", style: "apa") zu lesen.
   ]
 
-  #set heading(offset: 1)
+  #set heading(offset: 3, numbering: none)
   #bibliographyx(
     "bibliography.bib",
     prefix: "y-",
     title: "Bibliography",
-    full: true,
     style: "ieee",
   )
 ]
 
 #pagebreak(weak: true)
 
-= Splitting bibliographies
+= Splitting bibliographies <ex-split>
 
-The previous three examples showed using Alexandria to render three separate bibliographies for different parts of a document: @ex-native[Example] used the native bibliography, @ex-apa[Example] used Alexandria to show APA style references, and @ex-ieee[Example] showed IEEE style. Particularly, with IEEE, all references are numbered and multiple separate Alexandria bibliographies would reuse the same 1-based numbering.
+In the previous example, the bibliographies were created for separate parts of a document, and each had its own independent numbering.
+This approach will not work when multiple bibliographies have to serve the same region of the document, because with overlapping numbers the citations become ambiguous.
+For this scenario, Alexandria allows decoupling _loading_ and _collection_ of the references from their _rendering_.
+Instead of a single #ref-fn("bibliographyx()") call:
+- #ref-fn("load-bibliography()") loads all bibliographical entries with a specific prefix
+- #ref-fn("get-bibliography()") composes a list of entries referenced in the document
+- the user can manually filter this list by specific criteria, e.g. by the reference type
+- #ref-fn("render-bibliography()") renders the user-specified list of references. This function could be called multiple times, each time with a different subset of references.
 
-This approach is thus not suitable for multiple bibliographies that serve the same regions of a document. For this purpose, Alexandria also supports splitting the _loading_ and _rendering_ of a bibliography, giving you the opportunity to preprocess the bibliography entries. Instead of calling #ref-fn("bibliographyx()") directly, you'd use #ref-fn("load-bibliography()") followed by #ref-fn("get-bibliography()") and #ref-fn("render-bibliography()").
-
-An example could look like this:
+A sample Typst code that separates book references from all other types could look like this:
 
 #context crudo.join(
   main: -1,
@@ -142,45 +169,42 @@ An example could look like this:
   ```typ
   #show: alexandria(prefix: "x-", read: path => read(path))
 
-  ...
+  ... The text that cites entries from "x-" ...
 
-  // load the bibliography so that the data is available to citations and rendering
   #load-bibliography("bibliography.bib")
 
   #context {
-    // get the bibliography items
-    let (references, ..rest) =  get-bibliography("x-")
+    // get the bibliography items + additional information
+    let (references: bib_refs, ..bib_info) = get-bibliography("x-")
 
-    // render the bibliography
+    // render the non-book bibliography
     render-bibliography(
       title: [Bibliography],
       (
-        // instead of giving it all references, only consider non-book references
-        references: references.filter(x => x.details.type != "book"),
-        // `render-bibliography()` also needs the non-reference information
-        // that was returned by `get-bibliography()`
-        ..rest,
+        references: bib_refs.filter(ref => ref.details.type != "book"),
+        ..bib_info, // provide other information from get-bibliography()
       ),
     )
 
-    // render the rest of the bibliography
-    // (this could also be somewhere else in the document)
+    // render the books bibliography (could also be elsewhere in the document)
     render-bibliography(
       title: [Books],
       (
-        references: references.filter(x => x.details.type == "book"),
-        ..rest,
+        references: bib_refs.filter(ref => ref.details.type == "book"),
+        ..bib_info,
       ),
     )
   }
   ```
 )
 
-= Example -- Splitting a bibliography <ex-split>
+#pagebreak(weak: true)
 
-Here is a rendered example of using this approach. You can see how the single call to #ref-fn("load-bibliography()") results in the entries using distinct numbers.
+Here's how the rendered output would look like.
+Note that the numbering in the bibliographies is not sequential.
+It is the result of making the lists non-overlapping to allow citations unambiguosly refer to specific bibliographic entries.
 
-Note how all references are rendered once, although in a different presentation from usual. This is generally a requirement for citations being able to refer to their corresponding reference's label. In this particular case, this is not a concern since there are no citations and references were rendered due to the #ref-fn("load-bibliography.full") option, but in general this is a concern.
+== Example
 
 #[
   #import alexandria: *
@@ -189,26 +213,33 @@ Note how all references are rendered once, although in a different presentation 
   #load-bibliography(
     "bibliography.bib",
     prefix: "z-",
-    full: true,
   )
 
-  #set heading(offset: 1)
+  For further information on pirate and quark organizations, see #citegroup(prefix: "z-")[@z-arrgh @z-quark].
+  #cite(<z-distress>, form: "author") discusses bibliographical distress in @z-distress,
+  and @z-psychology25 is a hefty volume on various aspects of psychology.
+
+  #text(lang: "de")[
+    Über den "Netzwok" ist in der Arbeit von #cite(<z-netwok>, form: "prose", style: "apa") zu lesen.
+  ]
+
+  #set heading(offset: 3, numbering: none)
   #context {
-    let (references, ..rest) =  get-bibliography("z-")
+    let (references: bib_refs, ..bib_info) = get-bibliography("z-")
 
     render-bibliography(
       title: [Bibliography],
       (
-        references: references.filter(x => x.details.type != "book"),
-        ..rest,
+        references: bib_refs.filter(ref => ref.details.type != "book"),
+        ..bib_info,
       ),
     )
 
     render-bibliography(
       title: [Books],
       (
-        references: references.filter(x => x.details.type == "book"),
-        ..rest,
+        references: bib_refs.filter(ref => ref.details.type == "book"),
+        ..bib_info,
       ),
     )
   }
