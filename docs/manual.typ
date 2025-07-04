@@ -21,7 +21,15 @@
 
 = Introduction
 
-_Alexandria_ allows adding multiple bibliographies to the same document. Its two main functions are #ref-fn("alexandria()") and #ref-fn("bibliographyx()"). Typical usage would look something like this:
+_Alexandria_ enables multiple bibliographies in the same Typst document.
+
+#ref-fn("alexandria()") function declares that a group of bibliographical entries will be associated with a user-specified prefix (e.g. `x-`).
+Now, to reference an entry from a specific group, one has to add its prefix (e.g. `@x-quark` instead of `@quark`).
+The document may contain multiple #ref-fn("alexandria()") calls that declare multiple bibliographical groups, each with its own unique prefix.
+Importantly, #ref-fn("alexandria()") has to be called before any of its bibliographical entries are referenced in the document.
+#ref-fn("bibliographyx()") function is an extension of Typst-native #ref-fn("bibliography()") function that generates a bibliography limited to a specific prefix.
+
+Typical usage would look something like this:
 
 #context crudo.join(
   main: -1,
@@ -52,7 +60,12 @@ Some known limitations:
 - Native bibliographies have `numbering: none` applied to its title, while Alexandrias' haven't. ```typc show bibliography: set heading(...)``` also won't work on them.
 - Citations that are shown as footnotes are not supported yet -- see #link("https://github.com/SillyFreak/typst-alexandria/issues/11")[issue \#11].
 
-The example on the next page demonstrates some of these. If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
+If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
+
+The example on the next page demonstrates using separate bibliographies with independent numbering for different parts of a document:
+- @ex-native[Example] used the native bibliography
+- @ex-apa[Example] used Alexandria to show APA style references
+- @ex-ieee[Example] showed a numbered IEEE style.
 
 #pagebreak(weak: true)
 
@@ -125,11 +138,14 @@ The example on the next page demonstrates some of these. If you find additional 
 
 = Splitting bibliographies
 
-The previous three examples showed using Alexandria to render three separate bibliographies for different parts of a document: @ex-native[Example] used the native bibliography, @ex-apa[Example] used Alexandria to show APA style references, and @ex-ieee[Example] showed IEEE style. Particularly, with IEEE, all references are numbered and multiple separate Alexandria bibliographies would reuse the same 1-based numbering.
+The previous example demonstrated how to use Alexandria to create separate bibliographies for different parts of a document, each with its own independent numbering.
+This approach is not suitable for generating multiple bibliographies that serve the same region of a document and have non-overlapping numbering.
+For this purpose, Alexandria allows you to specify the references that go into each bibliography list. To do this, instead of a single #ref-fn("bibliographyx()") call, you split _loading_, _collecting_ and _rendering_ bibliographical references:
+- #ref-fn("load-bibliography()") loads all bibliographical entries
+- #ref-fn("get-bibliography()") composes a list of entries actually referenced in the document
+- #ref-fn("render-bibliography()") renders the list of bibliographical entries. You can call #ref-fn("render-bibliography()") multiple times, providing different subsets of the list generated at the previous step.
 
-This approach is thus not suitable for multiple bibliographies that serve the same regions of a document. For this purpose, Alexandria also supports splitting the _loading_ and _rendering_ of a bibliography, giving you the opportunity to preprocess the bibliography entries. Instead of calling #ref-fn("bibliographyx()") directly, you'd use #ref-fn("load-bibliography()") followed by #ref-fn("get-bibliography()") and #ref-fn("render-bibliography()").
-
-An example could look like this:
+An example typst code could look like this:
 
 #context crudo.join(
   main: -1,
