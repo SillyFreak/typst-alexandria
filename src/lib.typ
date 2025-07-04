@@ -4,19 +4,18 @@
   import "state.typ": *
   import "internal.typ": *
 
-  assert(str(key).starts-with(prefix), message: "Can only refer to an entry with the given prefix.")
-
-  let (index, group) = get-citation-info(prefix)
+  let citegroup_index = get-citegroup-index()
   context add-citation(prefix, (
-    key: str(key).slice(prefix.len()),
+    key: key,
     form: form,
     ..if style != auto { (style: csl-to-string(style)) },
     supplement: supplement,
     locale: locale(),
   ))
-  if not group {
+  if citegroup_index >= 0 {
     context {
-      let (body, supplements) = get-citation(prefix, index)
+      let (coll_id, incoll_index) = citegroup-to-collection.final().at(citegroup_index)
+      let (body, supplements) = get-citation(coll_id, incoll_index)
       hayagriva.render(
         body,
         keys: (key,),
@@ -39,46 +38,52 @@
 /// and @@load-bibliography() instead of paths.
 ///
 /// -> function
-#let alexandria(
+#let bibliography-source(
+  /// The path to or binary file contents of the bibliography file(s).
+  /// -> string | bytes | array
+  path,
   /// a prefix that identifies labels referring to Alexandria bibliographies. Bibliography entries
   /// will automatically get that prefix prepended.
-  /// -> string
+  /// -> string | regex
   prefix: none,
+  // -> string | none
+  prefix-delim: "-",
+  /// Whether to render the full bibliography or only the references that are used in the document.
+  /// -> boolean
+  full: false,
   /// pass ```typc path => read(path)``` into this parameter so that Alexandria can read your
   /// bibliography files.
   /// -> function
   read: none,
 ) = body => {
-  let read-value = read
   import "state.typ": *
 
   assert.ne(prefix, none, message: "usage without a prefix is not yet supported")
   // assert.ne(read-value, none, message: "read is required; provide a function `path => read(path)`")
 
-  let match(key) = prefix == none or str(key).starts-with(prefix)
-
-  set-read(read-value)
-  register-prefix(prefix)
+  register-bib-source(prefix, prefix-delim, path, read, full)
 
   show ref: it => {
-    if not match(it.target) {
+    let prefix_match = match-prefix(prefix, it.target)
+    if prefix_match == none {
       return it
     }
 
     citation(
-      prefix, it.target,
+      ..prefix_match,
       form: cite.form, style: cite.style,
       supplement: if it.supplement != auto { it.supplement },
     )
   }
 
   show cite: it => {
-    if not match(it.key) {
+    let prefix_match = match-prefix(prefix, it.key)
+    if prefix_match == none {
       return it
     }
 
     context citation(
-      prefix, it.key,
+      ..prefix_match,
       form: it.form, style: it.style,
       supplement: it.supplement,
     )
@@ -125,14 +130,9 @@
   // the citations themselves won't render as anything, so they're fine
   children.join()
   context {
-    let prefix = prefix
-    if prefix == auto {
-      prefix = get-only-prefix()
-      assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
-    }
-
-    let (index, ..) = get-citation-info(prefix)
-    let (body, supplements) = get-citation(prefix, index)
+    let citegroup_index = get-citegroup-index()
+    let (coll_id, incoll_index) = citegroup-to-collection.final().at(citegroup_index)
+    let (body, supplements) = get-citation(coll_id, incoll_index)
     hayagriva.render(
       body,
       keys: children.map(x => {
@@ -145,74 +145,6 @@
   end-citation-group()
 }
 
-/// Loads an additional bibliography. This reads the relevant bibliography file(s) and stores the
-/// extracted data in a state for later retrieval via @@get-bibliography(), but does not render
-/// anything yet. For simple use cases, @@bibliographyx() can be used directly.
-///
-/// Even though this only loads the bibliography, this function already requires knowledge of the
-/// citations that appear in the document, both to know which references to include (for non-`full`
-/// bibliographies) and in what styles, forms and languages these citations should be rendered.
-///
-/// The interface is similar to the built-in
-/// #link("https://typst.app/docs/reference/model/bibliography/")[`bibliography()`], but not all
-/// features are supported (yet). In particular, the default values reflect `bibliography()`, but
-/// some of these are not supported yet and need to be set manually. Also, the title parameter (only
-/// needed for rendering) is skipped.
-///
-/// -> content
-#let load-bibliography(
-  /// The path to or binary file contents of the bibliography file(s).
-  /// -> string | bytes | array
-  path,
-  /// The prefix for which reference labels should be provided and citations should be processed.
-  /// -> string | auto
-  prefix: auto,
-  /// Whether to render the full bibliography or only the references that are used in the document.
-  /// -> boolean
-  full: false,
-  /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
-  /// a file name that is read by the `read()` function registered via @@alexandria(), or binary
-  /// file contents of a CSL file.
-  /// -> string | bytes
-  style: "ieee",
-) = {
-  import "state.typ": *
-  import "internal.typ": *
-
-  let path = path
-  if type(path) != array {
-    path = (path,)
-  }
-
-  context {
-    let prefix = prefix
-    if prefix == auto {
-      prefix = get-only-prefix()
-      assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
-    }
-
-    let sources = path.map(path => read(path))
-
-    let style = csl-to-string(style)
-    if style in hayagriva.names {
-      style = (built-in: style)
-    } else {
-      style = (custom: read(style).data)
-    }
-
-    let locale = locale()
-    set-bibliography(prefix, citations => hayagriva.read(
-      sources,
-      full,
-      style,
-      locale,
-      citations.map(group => group.map(((supplement, ..citation)) => {
-        let has-supplement = supplement != none
-        (..citation, has-supplement: has-supplement)
-      })),
-    ))
-  }
-}
 
 /// Returns a previously loaded bibliography. This is used implicitly by @@bibliographyx() and
 /// Alexandria citations to retrieve rendered data, and can be used directly for more complex use
@@ -245,19 +177,53 @@
 /// This function is contextual.
 ///
 /// -> dict
-#let get-bibliography(
-  /// The prefix for which the bibliography should be retrieved, or `auto` if there is only one
-  /// bibliography and that one should be retrieved.
-  /// -> string | auto
-  prefix,
+#let collect-citations(
+  id,
+  /// The prefix or an array of prefixes for which the bibliography should be retrieved,
+  /// or `auto` if there is only one bibliography and that one should be retrieved.
+  /// -> string | array | auto
+  prefix-filter,
+  /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
+  /// a file name that is read by the `read()` function registered via @@alexandria(), or binary
+  /// file contents of a CSL file.
+  /// -> string | bytes
+  style: "ieee",
 ) = {
   import "state.typ": *
 
-  if prefix == auto {
-    prefix = get-only-prefix()
+  let sources = path.map(path => read(path))
+
+  if prefix-filter == auto {
+    let prefix = get-only-prefix()
     assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
+    let prefix_match = x => x == prefix
+  } else if type(prefix-filter) == str {
+    let prefix_match = x => x == prefix-filter
+  } else if type(prefix-filter) == array {
+    assert(prefix-filter.all(x => type(x) in str),
+           message: "prefixes must be a string, an array of strings or a regex")
+    let prefix_match = x => str(x) in prefix-filter
+  } else if type(prefix-filter) == regex {
+    let prefix_match = x => str(x).match(prefix-filter) != none
+  } else if type(prefix-filter) == func {
+    let prefix_match = prefix-filter
+  } else {
+    assert(type(prefix-filter), array, message: "prefixes must be a string, an array of strings or a regex")
+    let prefix-filter = prefix-filter
   }
-  get-bibliography(prefix)
+
+  context {
+    let style = csl-to-string(style)
+    if style in hayagriva.names {
+      style = (built-in: style)
+    } else {
+      style = (custom: read(style).data)
+    }
+
+    let locale = locale()
+
+    collect-and-process-citations(id, prefix_match, hayagriva)
+  }
 }
 
 /// Renders the provided bibliography data (as returned by @@get-bibliography();) with the given
@@ -273,7 +239,7 @@
 #let render-bibliography(
   /// The bibliography data
   /// -> dict
-  bib,
+  citations,
   /// The title of the bibliography. Note that `auto` is currently not supported.
   /// -> none | content | auto
   title: auto,
@@ -283,6 +249,7 @@
   if title != none {
     [= #title]
   }
+  bib = hayagriva(citations)
 
   set par(hanging-indent: 1.5em) if bib.hanging-indent
 
@@ -300,7 +267,7 @@
       ..for e in bib.references {
         (
           {
-            [#metadata(none)#label(bib.prefix + e.key)]
+            [#metadata(none)#label(e.prefix + e.key)]
             if e.prefix != none {
               hayagriva.render(e.prefix)
             }
@@ -313,7 +280,7 @@
     let gutter = v(par.spacing, weak: true)
     for (i, e) in bib.references.enumerate() {
       if i != 0 { gutter }
-      [#metadata(none)#label(bib.prefix + e.key)]
+      [#metadata(none)#label(e.prefix + e.key)]
       hayagriva.render(e.reference)
     }
   }
@@ -355,10 +322,10 @@
   /// -> string | bytes
   style: "ieee",
 ) = {
-  load-bibliography(path, prefix: prefix, full: full, style: style)
+  bibliography-source(path, prefix: prefix, full: full)
 
   context {
-    let bib = get-bibliography(prefix)
+    let bib = collect-and-process-citations(id: prefix, prefix-filter: prefix, style: style)
     render-bibliography(bib, title: title)
   }
 }

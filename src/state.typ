@@ -1,14 +1,11 @@
-#let config = state("__alexandria-config", (
-  prefixes: (:),
-  group-state: "none",
-  read: none,
+#let bib-sources = state("__alexandria-bib-sources", (:))
+#let citations = state("__alexandria-config", (
+  groups: (),             // array of citation groups in the order they were added
+                          // each group is an array of citations, which are tuples of (prefix: str, citation: str)
+  lastgroup-open: false,  // if the current citation group is open
 ))
-#let bibliographies = state("__alexandria-bibliographies", (:))
-
-#let set-read(read) = config.update(x => {
-  x.read = read
-  x
-})
+#let citegroup-collections = state("__alexandria-citegroup-collections", (:))
+#let citegroup-to-collection = state("__alexandria-citegroup-to-collection", (:)) // map of group index to collection index
 
 #let read(data) = {
   if type(data) == bytes {
@@ -22,100 +19,131 @@
   }
 }
 
-#let register-prefix(..prefixes) = {
-  assert.eq(prefixes.named().len(), 0)
-  let prefixes = prefixes.pos()
-
-  config.update(x => {
-    for prefix in prefixes {
-      x.prefixes.insert(prefix, (
-        citations: (),
-      ))
-    }
-    x
-  })
-
-  bibliographies.update(x => {
-    for prefix in prefixes {
-      x.insert(prefix, none)
-    }
+#let register-bib-source(prefix, prefix-delim : str, path, read, full: bool) = {
+  assert(type(prefix) in (str, regex),
+         message: "prefix must be a string or a regex")
+  bib-sources.update(x => {
+    x.insert(prefix, (prefix: prefix, prefix-delim: prefix-delim, path: path, read: read, full: full))
     x
   })
 }
 
-#let get-citation-info(prefix) = {
-  let (prefixes, group-state) = config.get()
-  let index = prefixes.at(prefix).citations.len()
-  if group-state == "open" {
-    // if a citegroup is open, the index is not the next one to be inserted,
-    // but the already existing last one
-    index -= 1
+#let match-prefix(prefix, delim: str, key) = {
+  if type(prefix) == str {
+    if str(key).starts_with(prefix) {
+      let prefix_val = prefix
+      let key = str(key).slice(prefix.len())
+    } else {
+      return none
+    }
+  } else if type(prefix) == regex {
+    let m = str(key).match(regex("^(" + prefix.regex + ")"))
+    if m == none {
+      return none
+    } else {
+      let prefix_val = m.at(0)
+      let key = str(key).slice(m.end())
+    }
   }
-  let group = group-state != "none"
-  (index: index, group: group)
+  if delim != none {
+    // strip key of the prefix delimiter
+    if not str(key).starts_with(delim) {
+      return none
+    }
+    key = str(key).slice(delim.len())
+  }
+  (prefix_val, key)
 }
 
-#let start-citation-group() = config.update(x => {
+#let start-citation-group() = citations.update(x => {
   assert.eq(
-    x.group-state, "none",
-    message: "can't start a citation group while one is open",
+    x.lastgroup-open, false,
+    message: "can't start a citation group while one is already open",
   )
-  x.group-state = "initial"
+  x.groups.push(()) // start a new citation group
+  x.lastgroup-open = true
   x
 })
 
-#let add-citation(prefix, citation) = config.update(x => {
-  if x.group-state == "none" {
-    // add a new citation group with only one element
-    x.prefixes.at(prefix).citations.push((citation,))
-  } else if x.group-state == "initial" {
-    x.group-state = "open"
-    // start the citation group with this citation
-    x.prefixes.at(prefix).citations.push((citation,))
-  } else {
+#let add-citation(prefix, citation) = citations.update(x => {
+  let prefixed_citation = (prefix: prefix, citation: citation)
+  if x.lastgroup-open {
     // add a citation to the currently open group
-    x.prefixes.at(prefix).citations.last().push(citation)
+    x.groups.last().push(prefixed_citation)
+  } else {
+    // add a new citation group with a single element
+    x.groups.push((prefixed_citation,))
   }
   x
 })
 
 #let end-citation-group() = config.update(x => {
-  assert.ne(
-    x.group-state, "none",
-    message: "can't end a citation group while none is open",
+  assert.eq(
+    x.lastgroup-open, true,
+    message: "can't end a citation group when none is open",
   )
-  // TODO doesn't work, because the citations are only later added through a show rule
-  // assert.ne(
-  //   x.group-state, "initial",
-  //   message: "citation group must not be empty",
-  // )
-  x.group-state = "none"
+  assert.ne(
+    x.groups.last().len(), 0,
+    message: "citation group must not be empty",
+  )
+  x.lastgroup-open = false
   x
 })
 
 #let get-only-prefix() = {
-  let prefixes = config.get().prefixes
-  if prefixes.len() != 1 {
+  let bib-sources = bib-sources.get()
+  if bib-sources.len() != 1 {
     return none
   }
-  prefixes.keys().first()
+  bib-sources.keys().first()
 }
 
-#let set-bibliography(prefix, hayagriva) = {
-  let config = config.final().prefixes.at(prefix)
-  bibliographies.update(x => {
-    if x.at(prefix) == none {
-      x.at(prefix) = (prefix: prefix, ..hayagriva(config.citations))
+#let collect-and-process-citations(id, citation-filter, hayagriva) = {
+  if type(prefixes) == str {
+    prefixes = (prefixes,)
+  } else {
+    assert(type(prefixes), array, message: "prefix must be a string or an array of strings")
+  }
+
+  let collected_citations = ()
+  let group_to_collection = (:)
+  for (index, citation_group) in citations.final().groups.enumerate() {
+    let ncollected = sum[citation-filter(citation) for citation in citation_group]
+    if ncollected > 0 {
+      assert.eq(
+        ncollected, citation_group.len(),
+        message: "collection should include all citations in a group or none, subsetting is not allowed"
+      )
+      group_to_collection[index] = (id, collected_citations.len())
+      collected_citations.push((index, citation_group.map((prefix, citation) => citation)))
     }
+  }
+
+  citegroup-to-collection.update(x => {
+    x += group_to_collection
     x
   })
+  let processed_collection = hayagriva(collected_citations)
+  citegroup-collections.update(x => {
+    x.at(id) = processed_collection
+    x
+  })
+  processed_collection
 }
 
-#let get-bibliography(prefix) = bibliographies.final().at(prefix)
-#let get-citation(prefix, index) = {
-  let body = get-bibliography(prefix).citations.at(index)
-  let supplements = config.final().prefixes.at(prefix).citations.at(index)
-    .map(citation => citation.supplement)
-
-  (body: body, supplements: supplements)
+#let get-citegroup-index() = {
+  let citations = citations.get()
+  if not citations.lastgroup-open {
+    citations.groups.len()
+  } else {
+    -1
+  }
 }
+
+#let get-citation(collection-id, incollection-index) = {
+  let citation = citegroup-collections.final().at(collection-id).at(incollection-index)
+  let supplements = citation.map(citation => citation.supplement)
+
+  (body: citation, supplements: supplements)
+}
+
