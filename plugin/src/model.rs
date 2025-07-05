@@ -52,6 +52,7 @@ pub struct Bibliography {
 #[serde(rename_all = "kebab-case")]
 pub struct Reference {
     pub key: String,
+    pub prefixes: Vec<String>,
     #[serde(serialize_with = "wrapper::ser_wrapped_option")]
     pub first_field: Option<ElemChild>,
     #[serde(serialize_with = "wrapper::ser_wrapped")]
