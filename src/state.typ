@@ -28,7 +28,7 @@
     // no delimiter found
     let def_prefix = default-prefix.get()
     if def_prefix != none {
-      (def_prefix, key) // assume the key contains the default prefix
+      (def_prefix, str(key)) // assume the key contains the default prefix
     } else {
       return none
     }

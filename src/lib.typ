@@ -26,6 +26,18 @@
   }
 }
 
+#let alexandria-prefix(
+  prefix
+) = {
+  import "state.typ": default-prefix
+
+  if prefix == none or type(prefix) == str {
+    default-prefix.update(x => prefix)
+  } else {
+    panic("prefix must be none or string, " + str(type(prefix)) + " provided")
+  }
+}
+
 /// This configuration function should be called as a show rule at the beginning of the document.
 /// The function makes sure that `ref()` and `cite()` commands can refer to Alexandria's custom
 /// bibliography entries and stores configuration for use by @@load-bibliography().
@@ -49,10 +61,14 @@
   /// bibliography files.
   /// -> function
   reader: none,
+  prefix: auto
 ) = body => {
   import "state.typ": *
 
   // assert.ne(reader, none, message: "reader is required; provide a function `sources => read(sources)`")
+  if prefix != auto {
+    alexandria-prefix(prefix)
+  }
   bib-sources.update(x => {
     (sources: sources, reader: reader, prefix-delim: prefix-delim)
   })
@@ -62,10 +78,10 @@
     if prefix_match == none {
       return it
     }
-    let (prefix, key) = prefix_match
+    let (prefix, target) = prefix_match
 
     citation(
-      prefix, key,
+      prefix, target,
       form: cite.form, style: cite.style,
       supplement: if it.supplement != auto { it.supplement },
     )
@@ -86,16 +102,6 @@
   }
 
   body
-}
-
-#let alexandria-prefix(
-  prefix: none
-) = {
-  if prefix == none or type(prefix) == str {
-    default-prefix.update(x => prefix)
-  } else {
-    panic("prefix must be none or string, " + str(type(prefix)) + " provided")
-  }
 }
 
 /// Creates a group of collapsed citations. The citations are given as regular content, e.g.
@@ -193,7 +199,7 @@
   style: "ieee",
 ) = {
   import "state.typ": *
-  import "hayagriva.typ": csl-to-string, locale, read
+  import "hayagriva.typ"
 
   let prefix_filter = if prefix-filter == auto {
     (x) => true
@@ -215,14 +221,14 @@
     prefix-filter
   }
 
-  let style = csl-to-string(style)
+  let style = hayagriva.csl-to-string(style)
   if style in hayagriva.names {
     style = (built-in: style)
   } else {
-    style = (custom: read(style).data)
+    style = (custom: if (type(style) == bytes) { str(style) } else { read(style) })
   }
 
-  let locale = locale()
+  let locale = hayagriva.locale()
 
   collect-and-process-citations(id,
     citation => prefix_filter(citation.prefix),
