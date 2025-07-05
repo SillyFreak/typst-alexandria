@@ -5,8 +5,9 @@
   import "hayagriva.typ": csl-to-string, locale
 
   let citegroup_index = get-citegroup-index()
-  context add-citation(prefix, (
+  context add-citation((
     key: key,
+    prefix: prefix,
     form: form,
     ..if style != auto { (style: csl-to-string(style)) },
     supplement: supplement,
@@ -15,7 +16,7 @@
   if citegroup_index >= 0 {
     context {
       let (coll_id, incoll_index) = citegroup-to-collection.final().at(citegroup_index)
-      let (body, supplements) = get-citation(coll_id, incoll_index)
+      let (body, supplements) = get-citation(coll_id, incoll_index, citegroup_index)
       hayagriva.render(
         body,
         keys: (key,),
@@ -38,58 +39,63 @@
 /// and @@load-bibliography() instead of paths.
 ///
 /// -> function
-#let bibliography-source(
+#let alexandria(
   /// The path to or binary file contents of the bibliography file(s).
   /// -> string | bytes | array
-  path,
-  /// a prefix that identifies labels referring to Alexandria bibliographies. Bibliography entries
-  /// will automatically get that prefix prepended.
-  /// -> string | regex
-  prefix: none,
+  sources,
   // -> string | none
   prefix-delim: "-",
-  /// Whether to render the full bibliography or only the references that are used in the document.
-  /// -> boolean
-  full: false,
   /// pass ```typc path => read(path)``` into this parameter so that Alexandria can read your
   /// bibliography files.
   /// -> function
-  read: none,
+  reader: none,
 ) = body => {
   import "state.typ": *
 
-  assert.ne(prefix, none, message: "usage without a prefix is not yet supported")
-  // assert.ne(read-value, none, message: "read is required; provide a function `path => read(path)`")
-
-  register-bib-source(prefix, prefix-delim, path, read, full)
+  // assert.ne(reader, none, message: "reader is required; provide a function `sources => read(sources)`")
+  bib-sources.update(x => {
+    (sources: sources, reader: reader, prefix-delim: prefix-delim)
+  })
 
   show ref: it => {
-    let prefix_match = match-prefix(prefix, it.target)
+    let prefix_match = match-prefix(prefix-delim, it.target)
     if prefix_match == none {
       return it
     }
+    let (prefix, key) = prefix_match
 
     citation(
-      ..prefix_match,
+      prefix, key,
       form: cite.form, style: cite.style,
       supplement: if it.supplement != auto { it.supplement },
     )
   }
 
   show cite: it => {
-    let prefix_match = match-prefix(prefix, it.key)
+    let prefix_match = match-prefix(prefix-delim, it.key)
     if prefix_match == none {
       return it
     }
+    let (prefix, key) = prefix_match
 
     context citation(
-      ..prefix_match,
+      prefix, key,
       form: it.form, style: it.style,
       supplement: it.supplement,
     )
   }
 
   body
+}
+
+#let alexandria-prefix(
+  prefix: none
+) = {
+  if prefix == none or type(prefix) == str {
+    default-prefix.update(x => prefix)
+  } else {
+    panic("prefix must be none or string, " + str(type(prefix)) + " provided")
+  }
 }
 
 /// Creates a group of collapsed citations. The citations are given as regular content, e.g.
@@ -102,9 +108,6 @@
 ///
 /// -> content
 #let citegroup(
-  /// The prefix for which reference labels should be provided and citations should be processed.
-  /// -> string | auto
-  prefix: auto,
   /// The body, containing at least one but usually more citations
   /// -> content
   body,
@@ -132,7 +135,7 @@
   context {
     let citegroup_index = get-citegroup-index()
     let (coll_id, incoll_index) = citegroup-to-collection.final().at(citegroup_index)
-    let (body, supplements) = get-citation(coll_id, incoll_index)
+    let (body, supplements) = get-citation(coll_id, incoll_index, citegroup_index)
     hayagriva.render(
       body,
       keys: children.map(x => {
@@ -181,8 +184,8 @@
   id,
   /// The prefix or an array of prefixes for which the bibliography should be retrieved,
   /// or `auto` if there is only one bibliography and that one should be retrieved.
-  /// -> string | array | auto
-  prefix-filter,
+  /// -> string | array | function | auto
+  prefix-filter: auto,
   /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
   /// a file name that is read by the `read()` function registered via @@alexandria(), or binary
   /// file contents of a CSL file.
@@ -192,37 +195,48 @@
   import "state.typ": *
   import "hayagriva.typ": csl-to-string, locale, read
 
-  if prefix-filter == auto {
-    let prefix = get-only-prefix()
-    assert.ne(prefix, none, message: "when using multiple custom bibliographies, you must specify the prefix for each")
-    let prefix_match = x => x == prefix
+  let prefix_filter = if prefix-filter == auto {
+    (x) => true
   } else if type(prefix-filter) == str {
-    let prefix_match = x => x == prefix-filter
+    (x) => str(x) == prefix-filter
   } else if type(prefix-filter) == array {
-    assert(prefix-filter.all(x => type(x) in str),
+    assert(prefix-filter.all(x => type(x) == str),
            message: "prefixes must be a string, an array of strings or a regex")
-    let prefix_match = x => str(x) in prefix-filter
+    (x) => str(x) in prefix-filter
   } else if type(prefix-filter) == regex {
-    let prefix_match = x => str(x).match(prefix-filter) != none
-  } else if type(prefix-filter) == func {
-    let prefix_match = prefix-filter
+    (x) => {
+      let m = str(x).match(prefix-filter)
+      m != none and m.start == 0
+    }
+  } else if type(prefix-filter) == function {
+    prefix-filter
   } else {
     assert(type(prefix-filter), array, message: "prefixes must be a string, an array of strings or a regex")
-    let prefix-filter = prefix-filter
+    prefix-filter
   }
 
-  context {
-    let style = csl-to-string(style)
-    if style in hayagriva.names {
-      style = (built-in: style)
-    } else {
-      style = (custom: read(style).data)
-    }
-
-    let locale = locale()
-
-    collect-and-process-citations(id, prefix_match, hayagriva)
+  let style = csl-to-string(style)
+  if style in hayagriva.names {
+    style = (built-in: style)
+  } else {
+    style = (custom: read(style).data)
   }
+
+  let locale = locale()
+
+  collect-and-process-citations(id,
+    citation => prefix_filter(citation.prefix),
+    (citations, sources) => hayagriva.read(
+      sources,
+      false,
+      style,
+      locale,
+      citations.map((group) => group.map(((supplement, ..citation)) => {
+          let has-supplement = supplement != none
+          (..citation, has-supplement: has-supplement)
+        })
+      )
+  ))
 }
 
 /// Renders the provided bibliography data (as returned by @@get-bibliography();) with the given
@@ -237,22 +251,32 @@
 /// -> content
 #let render-bibliography(
   /// The bibliography data
-  /// -> dict
-  citations,
+  /// -> string
+  id,
+  /// -> none | function
+  filter: none,
   /// The title of the bibliography. Note that `auto` is currently not supported.
   /// -> none | content | auto
   title: auto,
 ) = {
+  import "state.typ": citation-collections
+
   assert.ne(title, auto, message: "automatic title is not yet supported")
 
   if title != none {
     [= #title]
   }
-  bib = hayagriva(citations)
+
+  let bib = citation-collections.final().at(id)
 
   set par(hanging-indent: 1.5em) if bib.hanging-indent
 
-  if bib.references.any(e => e.prefix != none) {
+  let refs = if filter != none {
+    bib.references.filter(filter)
+  } else {
+    bib.references
+  }
+  if refs.any(e => e.first-field != none) {
     grid(
       columns: 2,
       // rows: (),
@@ -263,24 +287,24 @@
       // align: auto,
       // stroke: (:),
       // inset: (:),
-      ..for e in bib.references {
+      ..for e in refs {
         (
           {
-            [#metadata(none)#label(e.prefix + e.key)]
-            if e.prefix != none {
-              hayagriva.render(e.prefix)
+            [#metadata(none)#label(bib.id + e.key)]
+            if e.first-field != none {
+              hayagriva.render(e.first-field)
             }
           },
-          hayagriva.render(e.reference),
+          hayagriva.render(e.content),
         )
       },
     )
   } else {
     let gutter = v(par.spacing, weak: true)
-    for (i, e) in bib.references.enumerate() {
+    for (i, e) in refs.enumerate() {
       if i != 0 { gutter }
-      [#metadata(none)#label(e.prefix + e.key)]
-      hayagriva.render(e.reference)
+      [#metadata(none)#label(bib.id + e.key)]
+      hayagriva.render(e.content)
     }
   }
 }

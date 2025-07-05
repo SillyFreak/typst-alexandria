@@ -1,58 +1,38 @@
-#let bib-sources = state("__alexandria-bib-sources", (:))
+#let bib-sources = state("__alexandria-bib-sources", (sources: none, reader: none, prefix-delim: "-"))
 #let citations = state("__alexandria-config", (
   groups: (),             // array of citation groups in the order they were added
                           // each group is an array of citations, which are tuples of (prefix: str, citation: str)
   lastgroup-open: false,  // if the current citation group is open
 ))
-#let citegroup-collections = state("__alexandria-citegroup-collections", (:))
-#let citegroup-to-collection = state("__alexandria-citegroup-to-collection", (:)) // map of group index to collection index
+#let default-prefix = state("__alexandria-default-prefix", none) // default prefix for citations
+#let citation-collections = state("__alexandria-citation-collections", (:))
+#let citegroup-to-collection = state("__alexandria-citegroup-to-collection", ()) // map of group index to collection index
 
-#let read(data) = {
-  if type(data) == bytes {
-    (path: none, data: str(data))
-  } else if type(data) == str {
-    let read = config.get().read
-    assert.ne(read, none, message: "Alexandria is not configured. Make sure to use `#show: alexandria(...)`")
-    (path: data, data: read(data))
+#let bib-read(source, reader) = {
+  if type(source) == bytes {
+    (path: none, data: str(source))
+  } else if type(source) == str {
+    assert.ne(reader, none, message: "Alexandria is not configured. Make sure to use `#show: alexandria(...)`")
+    (path: source, data: reader(source))
   } else {
     panic("parameter must be a path string or data bytes")
   }
 }
 
-#let register-bib-source(prefix, prefix-delim : str, path, read, full: bool) = {
-  assert(type(prefix) in (str, regex),
-         message: "prefix must be a string or a regex")
-  bib-sources.update(x => {
-    x.insert(prefix, (prefix: prefix, prefix-delim: prefix-delim, path: path, read: read, full: full))
-    x
-  })
-}
-
-#let match-prefix(prefix, delim: str, key) = {
-  if type(prefix) == str {
-    if str(key).starts_with(prefix) {
-      let prefix_val = prefix
-      let key = str(key).slice(prefix.len())
+#let match-prefix(delim, key) = {
+  let m = str(key).match(delim) // check if key contains the delimiter
+  if m != none {
+    // split key into prefix and key
+    (str(key).slice(0, m.start), str(key).slice(m.end))
+  } else {
+    // no delimiter found
+    let def_prefix = default-prefix.get()
+    if def_prefix != none {
+      (def_prefix, key) // assume the key contains the default prefix
     } else {
       return none
     }
-  } else if type(prefix) == regex {
-    let m = str(key).match(regex("^(" + prefix.regex + ")"))
-    if m == none {
-      return none
-    } else {
-      let prefix_val = m.at(0)
-      let key = str(key).slice(m.end())
-    }
   }
-  if delim != none {
-    // strip key of the prefix delimiter
-    if not str(key).starts_with(delim) {
-      return none
-    }
-    key = str(key).slice(delim.len())
-  }
-  (prefix_val, key)
 }
 
 #let start-citation-group() = citations.update(x => {
@@ -65,14 +45,13 @@
   x
 })
 
-#let add-citation(prefix, citation) = citations.update(x => {
-  let prefixed_citation = (prefix: prefix, citation: citation)
+#let add-citation(citation) = citations.update(x => {
   if x.lastgroup-open {
     // add a citation to the currently open group
-    x.groups.last().push(prefixed_citation)
+    x.groups.last().push(citation)
   } else {
     // add a new citation group with a single element
-    x.groups.push((prefixed_citation,))
+    x.groups.push((citation,))
   }
   x
 })
@@ -90,45 +69,48 @@
   x
 })
 
-#let get-only-prefix() = {
-  let bib-sources = bib-sources.get()
-  if bib-sources.len() != 1 {
-    return none
-  }
-  bib-sources.keys().first()
-}
-
-#let collect-and-process-citations(id, citation-filter, hayagriva) = {
-  if type(prefixes) == str {
-    prefixes = (prefixes,)
-  } else {
-    assert(type(prefixes), array, message: "prefix must be a string or an array of strings")
-  }
-
+#let collect-and-process-citations(id, citation-filter, processor) = {
   let collected_citations = ()
-  let group_to_collection = (:)
+  let group_to_collection = ()
   for (index, citation_group) in citations.final().groups.enumerate() {
-    let ncollected = sum[citation-filter(citation) for citation in citation_group]
+    let ncollected = citation_group.map(x => if citation-filter(x) { 1 } else { 0 }).sum()
     if ncollected > 0 {
       assert.eq(
         ncollected, citation_group.len(),
         message: "collection should include all citations in a group or none, subsetting is not allowed"
       )
-      group_to_collection[index] = (id, collected_citations.len())
-      collected_citations.push((index, citation_group.map((prefix, citation) => citation)))
+      group_to_collection.push((id, collected_citations.len()))
+      collected_citations.push(citation_group)
+    } else {
+      group_to_collection.push(none) // no citations collected from this group
     }
   }
+  //panic("Collected citation types: " + collected_citations.map(x => str(type(x))).join(","))
+
+  let bib_sources = bib-sources.get()
+  let processed_sources = bib_sources.sources.map(src => bib-read(src, bib_sources.reader))
+  let processed_collection = (id: id, ..processor(collected_citations, processed_sources))
+  citation-collections.update(x => {
+    x.insert(id, processed_collection)
+    x
+  })
 
   citegroup-to-collection.update(x => {
-    x += group_to_collection
-    x
+    if x.len() == 0 {
+      group_to_collection
+    } else {
+      assert.eq(
+        x.len(), group_to_collection.len(),
+        message: "citegroup-to-collection must have the same length as the number of citation groups"
+      )
+      for (index, citegroup) in group_to_collection.enumerate() {
+        if citegroup != none {
+          x.at(index) = citegroup
+        }
+      }
+      x
+    }
   })
-  let processed_collection = hayagriva(collected_citations)
-  citegroup-collections.update(x => {
-    x.at(id) = processed_collection
-    x
-  })
-  processed_collection
 }
 
 #let get-citegroup-index() = {
@@ -140,10 +122,11 @@
   }
 }
 
-#let get-citation(collection-id, incollection-index) = {
-  let citation = citegroup-collections.final().at(collection-id).at(incollection-index)
-  let supplements = citation.map(citation => citation.supplement)
+#let get-citation(collection-id, incollection-index, citegroup-index) = {
+  let processed-citation = citation-collections.final().at(collection-id).citations.at(incollection-index)
+  let citegroup = citations.final().groups.at(citegroup-index)
+  let supplements = citegroup.map(citation => citation.supplement)
 
-  (body: citation, supplements: supplements)
+  (body: processed-citation, supplements: supplements)
 }
 
