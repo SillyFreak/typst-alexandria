@@ -31,6 +31,7 @@ pub enum Style {
 #[serde(rename_all = "kebab-case")]
 pub struct Citation {
     pub key: String,
+    pub prefix: Option<String>,
     #[serde(deserialize_with = "deser_cite_purpose")]
     pub form: Option<Option<CitePurpose>>,
     pub style: Option<String>,

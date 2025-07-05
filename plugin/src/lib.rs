@@ -251,6 +251,7 @@ mod tests {
             locale: citationberg::LocaleCode::en_us(),
             citations: vec![vec![Citation {
                 key: "netwok".to_string(),
+                prefix: None,
                 form: None,
                 style: None,
                 has_supplement: true,
