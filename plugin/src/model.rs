@@ -41,7 +41,7 @@ pub struct Citation {
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Bibliography {
-    pub references: Vec<Entry>,
+    pub references: Vec<Reference>,
     #[serde(serialize_with = "wrapper::ser_wrapped_seq")]
     pub citations: Vec<ElemChildren>,
     pub hanging_indent: bool,
@@ -49,12 +49,12 @@ pub struct Bibliography {
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub struct Entry {
+pub struct Reference {
     pub key: String,
     #[serde(serialize_with = "wrapper::ser_wrapped_option")]
-    pub prefix: Option<ElemChild>,
+    pub first_field: Option<ElemChild>,
     #[serde(serialize_with = "wrapper::ser_wrapped")]
-    pub reference: ElemChildren,
+    pub content: ElemChildren,
     pub details: hayagriva::Entry,
 }
 
