@@ -2,7 +2,7 @@
 
 #let citation(prefix, key, form: "normal", style: auto, supplement: auto) = {
   import "state.typ": *
-  import "internal.typ": *
+  import "hayagriva.typ": csl-to-string, locale
 
   let citegroup_index = get-citegroup-index()
   context add-citation(prefix, (
@@ -190,8 +190,7 @@
   style: "ieee",
 ) = {
   import "state.typ": *
-
-  let sources = path.map(path => read(path))
+  import "hayagriva.typ": csl-to-string, locale, read
 
   if prefix-filter == auto {
     let prefix = get-only-prefix()
