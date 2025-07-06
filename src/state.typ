@@ -19,9 +19,9 @@
   }
 }
 
-#let match-prefix(key, prefix-delim) = {
+#let match-prefix(key, allowed-prefixes, prefix-delim) = {
   let m = str(key).match(prefix-delim) // check if key contains the delimiter
-  if m != none {
+  let (prefix_, key_) = if m != none {
     // split key into prefix and key
     (str(key).slice(0, m.start), str(key).slice(m.end))
   } else {
@@ -32,6 +32,15 @@
     } else {
       (none, str(key)) // no prefix found
     }
+  }
+  if prefix_ != none and (
+    allowed-prefixes == auto or
+    type(allowed-prefixes) == array and allowed-prefixes.contains(prefix_) or
+    type(allowed-prefixes) == regex and allowed-prefixes.match(prefix_) != none
+  ) {
+    (prefix_, key_) // prefix is allowed
+  } else {
+    none // prefix is not or not matched allowed
   }
 }
 

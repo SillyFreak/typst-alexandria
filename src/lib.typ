@@ -75,7 +75,9 @@
   /// The default prefix to apply to citations that do not specify it explicitly.
   /// See #ref-an("alexandria-prefix()")
   /// -> string | none | auto
-  prefix: auto
+  prefix: auto,
+  /// The prefixes that are allowed in the citations. If `auto`, any prefixes are allowed
+  allowed-prefixes: auto
 ) = body => {
   import "state.typ"
 
@@ -92,13 +94,18 @@
   } else {
     panic("sources must be a string, bytes or an array of strings or bytes")
   }
+  let allowed_prefixes_ = if allowed-prefixes == str {
+    (allowed-prefixes,)
+  } else {
+    allowed-prefixes
+  }
   state.bib-sources.update(x => {
     (sources: sources_, reader: reader, prefix-delim: prefix-delim)
   })
 
   show ref: it => {
     context {
-      let prefix_match = state.match-prefix(it.target, prefix-delim)
+      let prefix_match = state.match-prefix(it.target, allowed_prefixes_, prefix-delim)
       if prefix_match == none {
         return it
       }
@@ -114,7 +121,7 @@
 
   show cite: it => {
     context {
-      let prefix_match = state.match-prefix(it.key, prefix-delim)
+      let prefix_match = state.match-prefix(it.key, allowed_prefixes_, prefix-delim)
       if prefix_match == none {
         return it
       }
