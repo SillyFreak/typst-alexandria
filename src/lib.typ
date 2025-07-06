@@ -300,8 +300,12 @@
 
   assert.ne(title, auto, message: "automatic title is not yet supported")
 
-  if title != none {
-    [= #title]
+  if type(title) == str {
+    heading(numbering:none, depth:1)[#title]
+  } else if type(title) == content {
+    title
+  } else if title != none {
+    panic("title must be a string, content or none, " + str(type(title)) + " provided")
   }
 
   context {
