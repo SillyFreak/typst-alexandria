@@ -67,10 +67,10 @@
     } else if "elem" in body {
       let body = body.elem
       show: it => {
-        if "entry" in body.meta {
+        if "reference" in body.meta {
           assert.ne(keys, none, message: "Alexandria: internal error: citation keys are missing")
-          assert(body.meta.entry < keys.len(), message: "Alexandria: internal error: unmatched key in citegroup")
-          let entry = keys.at(body.meta.entry)
+          assert(body.meta.reference < keys.len(), message: "Alexandria: internal error: unmatched key in citegroup")
+          let entry = keys.at(body.meta.reference)
           it = link(entry, it)
         }
         it
