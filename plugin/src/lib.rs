@@ -114,10 +114,10 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
 
     let styles = Arena::new();
     let mut driver = BibliographyDriver::new();
-    for group in config.citations {
+    for group in &config.citations {
         let mut items = Vec::with_capacity(group.len());
 
-        for citation in &group {
+        for citation in group {
             let Some(entry) = entries.get(&citation.key) else {
                 return Err(format!(
                     "key `{}` does not exist in the bibliography",
@@ -161,7 +161,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
         driver.citation(CitationRequest::new(
             items,
             citation_style,
-            Some(first.locale),
+            Some(first.locale.clone()),
             &LOCALES,
             None,
         ));
@@ -188,23 +188,42 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
         return Err("no bibliography".to_string());
     };
 
+    let key_to_prefixes = {
+        let mut map = IndexMap::<String, Vec<String>>::new();
+        for citation in config.citations.iter().flatten() {
+            if let Some(prefix) = &citation.prefix {
+                map.entry(citation.key.clone()).or_default().push(prefix.clone());
+            }
+        }
+        for prefixes in map.values_mut() {
+            prefixes.sort_unstable();
+            prefixes.dedup();
+        }
+        map
+    };
+
     let references = rendered_bib
         .items
         .into_iter()
         .map(|reference| {
             let key = reference.key;
-            let prefix = reference.first_field;
-            let reference = reference.content;
+            let first_field = reference.first_field;
+            let content = reference.content;
 
             let details = entries
                 .get(&key)
                 .cloned()
                 .expect("key has been found before but not anymore");
+            let prefixes = key_to_prefixes
+                .get(&key)
+                .cloned()
+                .expect("key has been found before but not anymore");
 
-            Entry {
+            Reference {
                 key,
-                prefix,
-                reference,
+                prefixes,
+                first_field,
+                content,
                 details,
             }
         })
@@ -251,6 +270,7 @@ mod tests {
             locale: citationberg::LocaleCode::en_us(),
             citations: vec![vec![Citation {
                 key: "netwok".to_string(),
+                prefix: None,
                 form: None,
                 style: None,
                 has_supplement: true,

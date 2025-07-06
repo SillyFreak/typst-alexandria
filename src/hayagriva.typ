@@ -7,6 +7,22 @@
   decode(_p.names())
 }
 
+#let locale() = {
+  if text.region != none {
+    text.lang + "-" + text.region
+  } else {
+    text.lang
+  }
+}
+
+#let csl-to-string(csl) = {
+  if type(csl) in (str, bytes) { return csl }
+
+  let csl = repr(csl).slice(1, -1)
+  assert.ne(csl, "..", message: "only named CSL styles can be converted to strings")
+  csl
+}
+
 #let read(
   sources,
   full,
@@ -53,10 +69,10 @@
     } else if "elem" in body {
       let body = body.elem
       show: it => {
-        if "entry" in body.meta {
+        if "reference" in body.meta {
           assert.ne(keys, none, message: "Alexandria: internal error: citation keys are missing")
-          assert(body.meta.entry < keys.len(), message: "Alexandria: internal error: unmatched key in citegroup")
-          let entry = keys.at(body.meta.entry)
+          assert(body.meta.reference < keys.len(), message: "Alexandria: internal error: unmatched key in citegroup")
+          let entry = keys.at(body.meta.reference)
           it = link(entry, it)
         }
         it
