@@ -19,8 +19,8 @@
   }
 }
 
-#let match-prefix(delim, key) = {
-  let m = str(key).match(delim) // check if key contains the delimiter
+#let match-prefix(key, prefix-delim) = {
+  let m = str(key).match(prefix-delim) // check if key contains the delimiter
   if m != none {
     // split key into prefix and key
     (str(key).slice(0, m.start), str(key).slice(m.end))
@@ -30,10 +30,28 @@
     if def_prefix != none {
       (def_prefix, str(key)) // assume the key contains the default prefix
     } else {
-      return none
+      (none, str(key)) // no prefix found
     }
   }
 }
+
+#let current-citegroup-index() = {
+  let citations = citations.get()
+  let offset = if citations.lastgroup-open { -1 } else { 0 }
+  (citations.groups.len() + offset, citations.lastgroup-open)
+}
+
+#let add-citation(citation) = citations.update(x => {
+  if x.lastgroup-open {
+    // assert(x.lastgroup-open, message: "cannot continue a closed citation group")
+    // add a citation to the currently open group
+    x.groups.last().push(citation)
+  } else {
+    // add a new citation group with a single element
+    x.groups.push((citation,))
+  }
+  x
+})
 
 #let start-citation-group() = citations.update(x => {
   assert.eq(
@@ -45,26 +63,15 @@
   x
 })
 
-#let add-citation(citation) = citations.update(x => {
-  if x.lastgroup-open {
-    // add a citation to the currently open group
-    x.groups.last().push(citation)
-  } else {
-    // add a new citation group with a single element
-    x.groups.push((citation,))
-  }
-  x
-})
-
-#let end-citation-group() = config.update(x => {
+#let end-citation-group() = citations.update(x => {
   assert.eq(
     x.lastgroup-open, true,
     message: "can't end a citation group when none is open",
   )
-  assert.ne(
-    x.groups.last().len(), 0,
-    message: "citation group must not be empty",
-  )
+  // assert.ne(
+  //   x.groups.last().len(), 0,
+  //   message: "citation group must not be empty",
+  // )
   x.lastgroup-open = false
   x
 })
@@ -113,20 +120,21 @@
   })
 }
 
-#let get-citegroup-index() = {
-  let citations = citations.get()
-  if not citations.lastgroup-open {
-    citations.groups.len()
+#let get-citegroup-content(citegroup-index) = {
+  let citegroup_to_coll = citegroup-to-collection.final()
+  if citegroup_to_coll.len() > citegroup-index {
+    let processed_index = citegroup_to_coll.at(citegroup-index)
+    if processed_index != none {
+      let (coll_id, incoll_index) = processed_index
+      let processed_citation = citation-collections.final().at(coll_id).citations.at(incoll_index)
+      let citegroup = citations.final().groups.at(citegroup-index)
+      let supplements = citegroup.map(citation => citation.supplement)
+      (body: processed_citation, supplements: supplements)
+    } else {
+      panic("Citation group " + citations.final().groups.at(citegroup-index).map(citation => citation.key).join(",") +
+            " not found in any collection")
+    }
   } else {
-    -1
+    panic("Citation group #" + str(citegroup-index) + " does not exist")
   }
 }
-
-#let get-citation(collection-id, incollection-index, citegroup-index) = {
-  let processed-citation = citation-collections.final().at(collection-id).citations.at(incollection-index)
-  let citegroup = citations.final().groups.at(citegroup-index)
-  let supplements = citegroup.map(citation => citation.supplement)
-
-  (body: processed-citation, supplements: supplements)
-}
-

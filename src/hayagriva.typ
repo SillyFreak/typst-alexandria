@@ -8,9 +8,11 @@
 }
 
 #let locale() = {
-  let locale = text.lang
-  if text.region != none { locale += "-" + text.region }
-  locale
+  if text.region != none {
+    text.lang + "-" + text.region
+  } else {
+    text.lang
+  }
 }
 
 #let csl-to-string(csl) = {
