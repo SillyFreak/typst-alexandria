@@ -66,9 +66,11 @@
   // title page
   page(columns: 2, {
     place(top, float: true, scope: "parent", {
-      show: block.with(height: 75%, above: 1.5cm)
+      show: block.with(height: 75%)
 
       set align(center)
+
+      v(1fr)
 
       // title
       block(text(weight: 700, 1.75em, title))
@@ -101,7 +103,6 @@
         ))
       })
 
-
       v(1fr)
 
       set align(left)
@@ -126,6 +127,9 @@
 
 // retrieve the package metadata (contextual)
 #let package-meta() = _info.get().meta
+
+// retrieve the evaluation scope (contextual)
+#let eval-scope() = _info.get().scope
 
 // retrieve the package import spec, i.e. `@preview/<name>:<version>` (contextual)
 #let package-import-spec(namespace: "preview") = {
@@ -155,7 +159,7 @@
   }
 
   context {
-    let scope = _info.get().scope + scope
+    let scope = eval-scope() + scope
     let module = tidy.parse-module(
       code,
       name: name,

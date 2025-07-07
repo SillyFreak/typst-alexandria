@@ -208,6 +208,8 @@
     ..module-doc.functions.map(fn => gen-entry(fn.name, args: ())),
     ..module-doc.variables.map(var => gen-entry(var.name)),
   )
+
+  show: block.with(sticky: true)
   grid(
     columns: (1fr,) * 3,
     column-gutter: 0.5em,
@@ -240,7 +242,7 @@
   import "template.typ": tidy
   import tidy.utilities: *
 
-  block(breakable: style-args.break-param-descriptions, {
+  block(breakable: style-args.break-param-descriptions, sticky: true, {
     let parameter-list = (style-args.style.show-parameter-list)(fn, style-args)
     let lbl = if style-args.enable-cross-references {
       label(style-args.label-prefix + fn.name + "()")
@@ -337,7 +339,7 @@
   import "template.typ": tidy
   import tidy.utilities: *
 
-  signature-block(breakable: style-args.break-param-descriptions, {
+  signature-block(breakable: style-args.break-param-descriptions, sticky: true, {
     let var-signature = mono-fn(
       var.name,
       ret: if "type" in var { (style-args.style.show-type)(var.type, style-args: style-args) },
