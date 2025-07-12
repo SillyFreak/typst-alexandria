@@ -230,15 +230,14 @@
 /// - `hanging-indent`: a boolean indicating whether the citation style uses a hanging indent for
 ///   its entries.
 ///
-/// The `references` in turn each contain
-/// - `key`: the reference key without prefix.
-/// - `reference`: a representation of the Typst content that should be rendered; this is processed
-///   by @@render-bibliography() to produce the actual context.
-/// - optionally `prefix`: this is _not_ the Alexandria prefix but another Typst content
-///   representation for styles that require it. For example, in IEEE style this would represent
-///   "[1]" and so on.
-/// - `details`: a dictionary containing several fields of structured data about the reference.
-///   Among these are `type`, `title`, `author`, `date`, etc. A full list can be found in the
+/// The elements of the `references` array have the following fields:
+/// - `key`: the original bibliography key (without Alexandria's prefix).
+/// - `content`: a Typst representation of the bibliographical entry; used by
+///   @@render-bibliography() for rendering bibliographical items.
+/// - optional `first-field`: Typst content for certain bibliography styles. For example,
+///   in IEEE style it represents "[1]", "[2]", etc.
+/// - `details`: a dictionary containing information about this reference, including
+///   `type`, `title`, `author`, and `date` fields. The full list can be found in the
 ///   #link("https://github.com/typst/hayagriva/blob/main/docs/file-format.md")[Hayagriva docs].
 ///
 /// The `citations` are representations of the Typst content that should be rendered at their
