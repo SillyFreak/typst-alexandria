@@ -193,18 +193,18 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
         .into_iter()
         .map(|reference| {
             let key = reference.key;
-            let prefix = reference.first_field;
-            let reference = reference.content;
+            let first_field = reference.first_field;
+            let content = reference.content;
 
             let details = entries
                 .get(&key)
                 .cloned()
                 .expect("key has been found before but not anymore");
 
-            Entry {
+            Reference {
                 key,
-                prefix,
-                reference,
+                first_field,
+                content,
                 details,
             }
         })

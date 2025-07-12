@@ -288,7 +288,7 @@
 
   set par(hanging-indent: 1.5em) if bib.hanging-indent
 
-  if bib.references.any(e => e.prefix != none) {
+  if bib.references.any(e => e.first-field != none) {
     grid(
       columns: 2,
       // rows: (),
@@ -303,11 +303,11 @@
         (
           {
             [#metadata(none)#label(bib.prefix + e.key)]
-            if e.prefix != none {
-              hayagriva.render(e.prefix)
+            if e.first-field != none {
+              hayagriva.render(e.first-field)
             }
           },
-          hayagriva.render(e.reference),
+          hayagriva.render(e.content),
         )
       },
     )
@@ -316,7 +316,7 @@
     for (i, e) in bib.references.enumerate() {
       if i != 0 { gutter }
       [#metadata(none)#label(bib.prefix + e.key)]
-      hayagriva.render(e.reference)
+      hayagriva.render(e.content)
     }
   }
 }
