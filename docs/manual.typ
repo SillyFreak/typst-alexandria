@@ -251,6 +251,6 @@ It is the result of making the lists non-overlapping to allow citations unambigu
 
 #module(
   read("/src/lib.typ"),
-  name: "alexandria",
+  name: none,
   label-prefix: none,
 )
