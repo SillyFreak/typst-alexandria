@@ -26,26 +26,20 @@
   }
 }
 
-/// This configuration function should be called as a show rule at the beginning of the document.
-/// The function makes sure that `ref()` and `cite()` commands can refer to Alexandria's custom
-/// bibliography entries and stores configuration for use by @@load-bibliography().
+/// This configuration function should be called as a _show rule_ at the beginning of the document.
+/// It enables Alexandria's customized processing of the `ref()` and `cite()` commands.
 ///
 /// ```typ
 /// #show: alexandria(prefix: "x-", read: path => read(path))
 /// ```
-///
-/// The `read` parameter can be skipped, in which case file paths can not be used for bibliography
-/// files and custom styles. This means you will need to pass `bytes` values to @@bibliographyx()
-/// and @@load-bibliography() instead of paths.
-///
 /// -> function
 #let alexandria(
-  /// a prefix that identifies labels referring to Alexandria bibliographies. Bibliography entries
-  /// will automatically get that prefix prepended.
+  /// a prefix that identifies citations from a specific Alexandria's bibliography.
   /// -> string
   prefix: none,
-  /// pass ```typc path => read(path)``` into this parameter so that Alexandria can read your
-  /// bibliography files.
+  /// the function to process the `path` and `style` parameters of @@bibliographyx() and
+  /// @@load-bibliography() commands.
+  /// Pass ```typc path => read(path)``` to read the contents of the bibliography and style files.
   /// -> function
   read: none,
 ) = body => {
@@ -91,16 +85,17 @@
 /// ```typ
 /// #citegroup[@a @b]
 /// ```
-/// Only citations, references and spaces may appear in the body. Whitespace is ignored, and the
-/// rest is treated as a group of citations to collapse. It is an error to have non-alexandria
-/// references, or references from different bibliographies, in the same citation group.
+/// Only citations, references and spaces may appear in the body.
+/// Mixing non-Alexandria references or references from different prefixes
+/// in the same citation group is *not supported*.
 ///
 /// -> content
 #let citegroup(
-  /// The prefix for which reference labels should be provided and citations should be processed.
+  /// the optional prefix for the citations within a group.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix: auto,
-  /// The body, containing at least one but usually more citations
+  /// the body, containing one or more citations.
   /// -> content
   body,
 ) = {
@@ -145,34 +140,39 @@
   end-citation-group()
 }
 
-/// Loads an additional bibliography. This reads the relevant bibliography file(s) and stores the
-/// extracted data in a state for later retrieval via @@get-bibliography(), but does not render
-/// anything yet. For simple use cases, @@bibliographyx() can be used directly.
+/// Loads the bibliography for a given prefix.
+/// The function reads the bibliography from the given file(s), which is used later by
+/// @@get-bibliography(). It does not render any content.
+/// For simple cases, @@bibliographyx() can be used directly.
 ///
-/// Even though this only loads the bibliography, this function already requires knowledge of the
+/// Even though this function only loads the bibliography, it requires knowledge of the
 /// citations that appear in the document, both to know which references to include (for non-`full`
 /// bibliographies) and in what styles, forms and languages these citations should be rendered.
 ///
 /// The interface is similar to the built-in
 /// #link("https://typst.app/docs/reference/model/bibliography/")[`bibliography()`], but not all
 /// features are supported (yet). In particular, the default values reflect `bibliography()`, but
-/// some of these are not supported yet and need to be set manually. Also, the title parameter (only
-/// needed for rendering) is skipped.
+/// some of these are not supported yet and need to be set manually.
+/// Some parameters, like `title`, have to be specified when calling @@render-bibliography(), which
+/// actually renders the bibliography.
 ///
 /// -> content
 #let load-bibliography(
-  /// The path to or binary file contents of the bibliography file(s).
+  /// the path(s) to the bibliography file(s), which is passed to the `read` function
+  /// registered via @@alexandria(), or its binary contents if no `read` function provided.
   /// -> string | bytes | array
   path,
-  /// The prefix for which reference labels should be provided and citations should be processed.
+  /// the optional prefix for which the bibliography is loaded.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix: auto,
-  /// Whether to render the full bibliography or only the references that are used in the document.
+  /// whether the bibliography for the given prefix should include all bibliographical entries
+  /// from `path` or only the ones cited in the document.
   /// -> boolean
   full: false,
-  /// The style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
-  /// a file name that is read by the `read()` function registered via @@alexandria(), or binary
-  /// file contents of a CSL file.
+  /// the style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
+  /// a path to a CSL file passed to `read()` registered via @@alexandria(), or its binary
+  /// contents.
   /// -> string | bytes
   style: "ieee",
 ) = {
@@ -214,13 +214,15 @@
   }
 }
 
-/// Returns a previously loaded bibliography. This is used implicitly by @@bibliographyx() and
-/// Alexandria citations to retrieve rendered data, and can be used directly for more complex use
-/// cases. Usually, the returned data will be ultimately rendered using @@render-bibliography().
+/// Collects all references that have to be rendered.
+/// This function is called by @@bibliographyx() and when rendering Alexandria citations.
+/// It can also be directly called by the user for more complex use cases.
+/// Before calling this function, you must call @@load-bibliography() to load the bibliography data.
+/// To actually render the bibliographical list, the result of @@get-bibliography() has to be passed to
+/// @@render-bibliography().
 ///
 /// The result is a dictionary with the following keys:
-/// - `prefix`: the string prefix used by Alexandria to identify this bibliography (and passed to
-///   this function), used as a prefix for all labels rendered by Alexandria.
+/// - `prefix`: the unique string prefix that identifies this Alexandria bibliography.
 /// - `references`: an array of reference dictionaries which can be rendered into a bibliography.
 ///   The array is sorted by the appearance of references according to the style used.
 /// - `citations`: an array of citations dictionaries which can be rendered into the various
@@ -246,8 +248,8 @@
 ///
 /// -> dict
 #let get-bibliography(
-  /// The prefix for which the bibliography should be retrieved, or `auto` if there is only one
-  /// bibliography and that one should be retrieved.
+  /// the optional prefix for which the bibliography should be retrieved.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix,
 ) = {
@@ -260,21 +262,21 @@
   get-bibliography(prefix)
 }
 
-/// Renders the provided bibliography data (as returned by @@get-bibliography();) with the given
-/// title. For simple use cases, @@bibliographyx() can be used directly, which also handles the data
-/// retrieval.
+/// Renders the given list of bibliographical references.
+/// For simple use cases, @@bibliographyx() can be called directly.
 ///
-/// You will usually only need to call this directly if you _don't_ pass the exact return value of
-/// @@get-bibliography() as an argument. Instead, you'll want to preprocess that data, e.g. by
-/// filtering out some `references` entries that should appear elsewhere in the document. Note that
-/// generally, you'll need to ultimately render all references, or you'll get unresolved citations.
+/// You will only need to call this function directly if you want to postprocess the results of
+/// @@get-bibliography(), e.g. by filtering out the `references` entries that should appear in
+/// another bibliography elsewhere in the document.
+/// Note that, to avoid unresolved citations, all references generated by @@get-bibliography()
+/// have to appear in some @@render-bibliography() call.
 ///
 /// -> content
 #let render-bibliography(
-  /// The bibliography data
+  /// the bibliography data prepared by the @@get-bibliography() call.
   /// -> dict
   bib,
-  /// The title of the bibliography. Note that `auto` is currently not supported.
+  /// the title of the bibliography. Note that `auto` is currently not supported.
   /// -> none | content | auto
   title: auto,
 ) = {
@@ -319,7 +321,7 @@
   }
 }
 
-/// Renders an additional bibliography. The interface is similar to the built-in
+/// Renders the bibliography for a given prefix. The interface is similar to the built-in
 /// #link("https://typst.app/docs/reference/model/bibliography/")[`bibliography()`], but not all
 /// features are supported (yet). In particular, the default values reflect `bibliography()`, but
 /// some of these are not supported yet and need to be set manually.
@@ -327,31 +329,37 @@
 /// ```typ
 /// #bibliographyx(
 ///   "bibliography.bib",
+///   prefix: "x-",
 ///   title: "Bibliography",
 ///   full: true,
 ///   style: "ieee",
 /// )
 /// ```
 ///
-/// This function is based on @@load-bibliography(), @@get-bibliography(), and
-/// @@render-bibliography() and simply reproduces the rendering of the built-in bibliography without
-/// modification.
+/// This convenience function calls @@load-bibliography(), @@get-bibliography(), and
+/// @@render-bibliography() to reproduce the behavior of the built-in ```typc bibliography()```
+/// call.
 ///
 /// -> content
 #let bibliographyx(
-  /// The path to or binary file contents of the bibliography file(s).
+  /// the path(s) to the bibliography file(s), which is passed to the `read` function
+  /// registered via @@alexandria(), or its binary contents if no `read` function provided.
   /// -> string | bytes | array
   path,
-  /// The prefix for which reference labels should be provided and citations should be processed.
+  /// the optional prefix for which the bibliography is generated.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix: auto,
-  /// The title of the bibliography. Note that `auto` is currently not supported.
+  /// the title of the bibliography. Note that `auto` is currently not supported.
   /// -> none | content | auto
   title: auto,
-  /// Whether to render the full bibliography or only the references that are used in the document.
+  /// whether to render all bibliographical entries from `path` or only the ones
+  /// cited in the document.
   /// -> boolean
   full: false,
-  /// The style of the bibliography.
+  /// the style of the bibliography. Either a #link("https://typst.app/docs/reference/model/bibliography/#parameters-style")[built-in style],
+  /// a path to a CSL file passed to `read` registered via @@alexandria(), or its binary
+  /// contents.
   /// -> string | bytes
   style: "ieee",
 ) = {
