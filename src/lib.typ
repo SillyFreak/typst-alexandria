@@ -91,7 +91,8 @@
 ///
 /// -> content
 #let citegroup(
-  /// the prefix for the citations within a group.
+  /// the optional prefix for the citations within a group.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix: auto,
   /// the body, containing one or more citations.
@@ -160,7 +161,8 @@
   /// registered via @@alexandria(), or its binary contents if no `read` function provided.
   /// -> string | bytes | array
   path,
-  /// the prefix for which the bibliography is loaded.
+  /// the optional prefix for which the bibliography is loaded.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix: auto,
   /// whether the bibliography for the given prefix should include all bibliographical entries
@@ -243,8 +245,8 @@
 ///
 /// -> dict
 #let get-bibliography(
-  /// the prefix for which the bibliography should be retrieved, or `auto` if there is only one
-  /// bibliography.
+  /// the optional prefix for which the bibliography should be retrieved.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix,
 ) = {
@@ -341,7 +343,8 @@
   /// registered via @@alexandria(), or its binary contents if no `read` function provided.
   /// -> string | bytes | array
   path,
-  /// the prefix for which the bibliography is generated.
+  /// the optional prefix for which the bibliography is generated.
+  /// It only needs to be specified if more than one prefix was registered.
   /// -> string | auto
   prefix: auto,
   /// the title of the bibliography. Note that `auto` is currently not supported.
