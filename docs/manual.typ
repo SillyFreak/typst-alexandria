@@ -149,7 +149,7 @@ Below we demonstrate how to create separate bibliographies with independent numb
 
 In the previous example, the bibliographies were created for separate parts of a document, and each had its own independent numbering.
 This approach will not work when multiple bibliographies have to serve the same region of the document, because with overlapping numbers the citations become ambiguous.
-For this scenario, Alexandria allows decoupling _loading_ and _collection_ of the references from their _rendering_.
+For this scenario, Alexandria allows decoupling _loading_ and _collecting_ of the references from their _rendering_.
 Instead of a single #ref-fn("bibliographyx()") call:
 - #ref-fn("load-bibliography()") loads all bibliographical entries with a specific prefix
 - #ref-fn("get-bibliography()") composes a list of entries referenced in the document
@@ -175,14 +175,14 @@ A sample Typst code that separates book references from all other types could lo
 
   #context {
     // get the bibliography items + additional information
-    let (references: bib_refs, ..bib_info) = get-bibliography("x-")
+    let (references: bib-refs, ..bib-info) = get-bibliography("x-")
 
     // render the non-book bibliography
     render-bibliography(
       title: [Bibliography],
       (
-        references: bib_refs.filter(ref => ref.details.type != "book"),
-        ..bib_info, // provide other information from get-bibliography()
+        references: bib-refs.filter(ref => ref.details.type != "book"),
+        ..bib-info, // provide other information from get-bibliography()
       ),
     )
 
@@ -190,8 +190,8 @@ A sample Typst code that separates book references from all other types could lo
     render-bibliography(
       title: [Books],
       (
-        references: bib_refs.filter(ref => ref.details.type == "book"),
-        ..bib_info,
+        references: bib-refs.filter(ref => ref.details.type == "book"),
+        ..bib-info,
       ),
     )
   }
@@ -225,21 +225,21 @@ It is the result of making the lists non-overlapping to allow citations unambigu
 
   #set heading(offset: 3, numbering: none)
   #context {
-    let (references: bib_refs, ..bib_info) = get-bibliography("z-")
+    let (references: bib-refs, ..bib-info) = get-bibliography("z-")
 
     render-bibliography(
       title: [Bibliography],
       (
-        references: bib_refs.filter(ref => ref.details.type != "book"),
-        ..bib_info,
+        references: bib-refs.filter(ref => ref.details.type != "book"),
+        ..bib-info,
       ),
     )
 
     render-bibliography(
       title: [Books],
       (
-        references: bib_refs.filter(ref => ref.details.type == "book"),
-        ..bib_info,
+        references: bib-refs.filter(ref => ref.details.type == "book"),
+        ..bib-info,
       ),
     )
   }
