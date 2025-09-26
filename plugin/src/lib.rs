@@ -129,7 +129,10 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
                 .has_supplement
                 .then_some(hayagriva::SpecificLocator(
                     citationberg::taxonomy::Locator::Custom,
-                    hayagriva::LocatorPayload::Transparent,
+                    // TODO use a meaningful TransparentLocator. This should be equivalent to the
+                    // previous behavior: transparent locators are not differentiated,
+                    // i.e. Alexandria has the https://github.com/typst/hayagriva/issues/280 bug
+                    hayagriva::LocatorPayload::Transparent(hayagriva::TransparentLocator::new(())),
                 ));
 
             items.push(CitationItem::new(
