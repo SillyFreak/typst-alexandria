@@ -1,0 +1,6 @@
+katalog:
+    type: Book
+    title: "Book"
+    author: "Surname, Name"
+    location: Warsaw
+    date: 1971

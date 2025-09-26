@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" class="note" version="1.0" demote-non-dropping-particle="sort-only">
+   <info>
+      <title>Citing style</title>
+      <id>http://www.example.com/</id>
+   </info>
+
+   <citation>
+      <layout prefix="" suffix="." delimiter="; ">
+         <choose>
+            <if position="ibid-with-locator">
+              <text term="part" />
+            </if>
+            <else-if position="ibid">
+              <text term="ibid" />
+            </else-if>
+            <else-if position="subsequent">
+              <text term="volume" />
+            </else-if>
+            <else>
+              <text term="book" />
+            </else>
+         </choose>
+      </layout>
+   </citation>
+  <bibliography>
+    <sort>
+      <key macro="contributors-biblio"/>
+    </sort>
+    <layout suffix=".">
+      <group delimiter=", ">
+        <group delimiter=", ">
+          <text macro="locators-chapter"/>
+        </group>
+      </group>
+    </layout>
+  </bibliography>
+</style>
