@@ -7,7 +7,7 @@
   assert(str(key).starts-with(prefix), message: "Can only refer to an entry with the given prefix.")
 
   let (index, group) = get-citation-info(prefix)
-  context add-citation(prefix, (
+  add-citation(prefix, (
     key: str(key).slice(prefix.len()),
     form: form,
     ..if style != auto { (style: csl-to-string(style)) },
