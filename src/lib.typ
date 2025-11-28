@@ -278,6 +278,11 @@
   /// the title of the bibliography. Note that `auto` is currently not supported.
   /// -> none | content | auto
   title: auto,
+  /// the way each entry is laid out. Default is `auto`, i.e., defined by the CSL style.
+  /// To use grid-based `(prefix, body)` row per entry, use `false`.
+  /// To use paragraph-based entries, use `true`.
+  /// -> bool | auto
+  par-like: auto,
 ) = {
   assert.ne(title, auto, message: "automatic title is not yet supported")
 
@@ -287,7 +292,7 @@
 
   set par(hanging-indent: 1.5em) if bib.hanging-indent
 
-  if bib.references.any(e => e.first-field != none) {
+  if bib.references.any(e => e.first-field != none) and par-like in (auto, false) {
     grid(
       columns: 2,
       // rows: (),
@@ -310,6 +315,14 @@
         )
       },
     )
+  } else if bib.references.any(e => e.first-field != none) and par-like == true {
+    let gutter = v(par.spacing, weak: true)
+    for (i, e) in bib.references.enumerate() {
+      if i != 0 { gutter }
+      if e.prefix != none { hayagriva.render(e.prefix) + [~] }
+      [#metadata(none)#label(bib.prefix + e.key)]
+      hayagriva.render(e.reference)
+    }
   } else {
     let gutter = v(par.spacing, weak: true)
     for (i, e) in bib.references.enumerate() {
@@ -361,11 +374,16 @@
   /// contents.
   /// -> string | bytes
   style: "ieee",
+  /// the way each entry is laid out. Default is `auto`, i.e., defined by the CSL style.
+  /// To use grid-based `(prefix, body)` row per entry, use `false`.
+  /// To use paragraph-based entries, use `true`.
+  /// -> bool | auto
+  par-like: auto,
 ) = {
   load-bibliography(path, prefix: prefix, full: full, style: style)
 
   context {
     let bib = get-bibliography(prefix)
-    render-bibliography(bib, title: title)
+    render-bibliography(bib, title: title, par-like: par-like)
   }
 }
