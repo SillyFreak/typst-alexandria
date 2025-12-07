@@ -18,7 +18,7 @@ doc:
 # run test suite
 test *args:
   cargo test
-  tt run -F --max-delta 1 {{ args }}
+  tt run --no-fail-fast --max-delta 1 {{ args }}
 
 # update test cases
 update *args:
