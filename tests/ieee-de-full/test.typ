@@ -7,7 +7,7 @@
 #x-test-citations
 
 #x-bib(
-  title: "Bibliographie",
+  title: "Bibliografie",
   full: true,
   style: "ieee",
 )
