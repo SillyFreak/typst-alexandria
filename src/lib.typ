@@ -207,8 +207,8 @@
       style,
       locale,
       citations.map(group => group.map(((supplement, ..citation)) => {
-        let has-supplement = supplement != none
-        (..citation, has-supplement: has-supplement)
+        let supplement = if supplement != none { repr(supplement) }
+        (..citation, supplement: supplement)
       })),
     ))
   }
