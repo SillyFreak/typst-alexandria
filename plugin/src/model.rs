@@ -34,7 +34,7 @@ pub struct Citation {
     #[serde(deserialize_with = "deser_cite_purpose")]
     pub form: Option<Option<CitePurpose>>,
     pub style: Option<String>,
-    pub has_supplement: bool,
+    pub supplement: Option<String>,
     pub locale: hayagriva::citationberg::LocaleCode,
 }
 
