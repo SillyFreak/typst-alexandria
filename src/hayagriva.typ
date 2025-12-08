@@ -67,6 +67,8 @@
       let body = body.link
       show: formatted(body)
       link(body.url, body.text)
+    } else if "markup" in body {
+      eval(body.markup, mode: "math")
     } else if "transparent" in body {
       let body = body.transparent
       show: formatted(body)
