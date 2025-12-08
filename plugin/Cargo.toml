@@ -11,5 +11,7 @@ ciborium = "0.2.2"
 hayagriva = "0.9.1"
 indexmap = "2.7.1"
 serde = { version = "1.0.213", features = ["derive"] }
+serde_yaml = "0.9.34"
 typed-arena = "2.0.2"
+typst-syntax = "0.14.1"
 wasm-minimal-protocol = "0.1.0"
