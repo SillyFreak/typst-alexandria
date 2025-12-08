@@ -1,0 +1,10 @@
+test:
+  type: article
+  author: Author, A.
+  date: 2025
+  title: This is a Test $x^2$
+test2:
+  type: article
+  author: Bauthor, B.
+  date: 2025
+  title: This is also a Test $#strike(text[Title])$
