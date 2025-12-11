@@ -2,7 +2,7 @@
 
 This package provides an alternative to the built-in bibliography to allow a single document to have multiple bibliographies.
 
-This package currently has a few limitations, such as not supporting footnote citation yet, but more general support is planned.
+This package currently has a few limitations, mostly around how styling applies differently between the built-in bibliography and Alexandria.
 
 ## Getting Started
 
