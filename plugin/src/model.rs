@@ -41,21 +41,28 @@ pub struct Citation {
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
 pub struct Bibliography {
-    pub references: Vec<Reference>,
-    #[serde(serialize_with = "wrapper::ser_wrapped_seq")]
-    pub citations: Vec<ElemChildren>,
+    pub references: Vec<RenderedReference>,
+    pub citations: Vec<RenderedCitation>,
     pub hanging_indent: bool,
 }
 
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "kebab-case")]
-pub struct Reference {
+pub struct RenderedReference {
     pub key: String,
     #[serde(serialize_with = "wrapper::ser_wrapped_option")]
     pub first_field: Option<ElemChild>,
     #[serde(serialize_with = "wrapper::ser_wrapped")]
     pub content: ElemChildren,
     pub details: hayagriva::Entry,
+}
+
+#[derive(Serialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "kebab-case")]
+pub struct RenderedCitation {
+    pub footnote: bool,
+    #[serde(serialize_with = "wrapper::ser_wrapped")]
+    pub content: ElemChildren,
 }
 
 fn deser_cite_purpose<'de, D>(deserializer: D) -> Result<Option<Option<CitePurpose>>, D::Error>

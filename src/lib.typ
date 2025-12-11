@@ -17,11 +17,16 @@
   if not group {
     context {
       let (body, supplements) = get-citation(prefix, index)
-      hayagriva.render(
-        body,
+      let (footnote, content) = body
+      let citation = hayagriva.render(
+        content,
         keys: (key,),
         ..supplements,
       )
+      if footnote and form != none {
+        citation = std.footnote(citation)
+      }
+      citation
     }
   }
 }
@@ -128,14 +133,19 @@
 
     let (index, ..) = get-citation-info(prefix)
     let (body, supplements) = get-citation(prefix, index)
-    hayagriva.render(
-      body,
+    let (footnote, content) = body
+    let citation = hayagriva.render(
+      content,
       keys: children.map(x => {
         if x.func() == ref { x.target }
         else if x.func() == cite { x.key }
       }),
       ..supplements,
     )
+    if footnote and children.any(x => x.at("form", default: "normal") != none) {
+      citation = std.footnote(citation)
+    }
+    citation
   }
   end-citation-group()
 }

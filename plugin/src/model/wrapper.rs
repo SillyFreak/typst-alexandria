@@ -22,23 +22,6 @@ where
     value.as_ref().map(SerWrapper).serialize(serializer)
 }
 
-pub fn ser_wrapped_seq<Seq, S, T>(value: Seq, serializer: S) -> Result<S::Ok, S::Error>
-where
-    Seq: IntoIterator<Item = T>,
-    S: Serializer,
-    SerWrapper<T>: Serialize,
-{
-    let iter = value.into_iter().map(SerWrapper);
-    let mut seq = serializer.serialize_seq(match iter.size_hint() {
-        (lower, Some(upper)) if lower == upper => Some(lower),
-        _ => None,
-    })?;
-    for elem in iter {
-        seq.serialize_element(&elem)?;
-    }
-    seq.end()
-}
-
 pub struct SerWrapper<T>(T);
 
 impl Serialize for SerWrapper<&ElemChildren> {
