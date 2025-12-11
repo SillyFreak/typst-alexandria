@@ -35,7 +35,7 @@
 /// It enables Alexandria's customized processing of the `ref()` and `cite()` commands.
 ///
 /// ```typ
-/// #show: alexandria(prefix: "x-", read: path => read(path))
+/// #show: alexandria(prefix: "x:", read: path => read(path))
 /// ```
 /// -> function
 #let alexandria(
@@ -88,7 +88,7 @@
 
 /// Creates a group of collapsed citations. The citations are given as regular content, e.g.
 /// ```typ
-/// #citegroup[@a @b]
+/// #citegroup[@x:a @x:b]
 /// ```
 /// Only citations, references and spaces may appear in the body.
 /// Mixing non-Alexandria references or references from different prefixes
@@ -338,7 +338,7 @@
 /// ```typ
 /// #bibliographyx(
 ///   "bibliography.bib",
-///   prefix: "x-",
+///   prefix: "x:",
 ///   title: "Bibliography",
 ///   full: true,
 ///   style: "ieee",

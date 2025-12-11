@@ -8,7 +8,7 @@
 )
 
 #context {
-  let (references, ..rest) =  get-bibliography("x-")
+  let (references, ..rest) =  get-bibliography("x:")
 
   alexandria.render-bibliography(
     title: [Bibliography],

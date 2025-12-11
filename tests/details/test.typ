@@ -9,7 +9,7 @@
 )
 
 #context {
-  let details = get-bibliography("x-").references.find(x => x.key == "tolkien54").details
+  let details = get-bibliography("x:").references.find(x => x.key == "tolkien54").details
   assert.eq(details, (
     type: "book",
     title: "The Fellowship of the Ring",

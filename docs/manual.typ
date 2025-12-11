@@ -24,8 +24,8 @@
 _Alexandria_ enables multiple bibliographies within the same Typst document.
 
 In _Alexandria_, each citation is associated with a _prefix_.
-#ref-fn("alexandria()") function declares a prefix, e.g. `"x-"`, for a group of bibliographical references.
-After this, you can use regular Typst citations, prepending the prefix to a bibliographic key to indicate that it refers to a specific group, e.g. `@x-quark` or `#cite(<x-netwok>)`.
+#ref-fn("alexandria()") function declares a prefix, e.g. `"x:"`, for a group of bibliographical references.
+After this, you can use regular Typst citations, prepending the prefix to a bibliographic key to indicate that it refers to a specific group, e.g. `@x:quark` or `#cite(<x:netwok>)`.
 _Alexandria_'s #ref-fn("bibliographyx()") is the equivalent of the built-in `bibliography()` function for generating a bibliography limited to a specific prefix.
 
 Typical usage looks like this:
@@ -39,22 +39,22 @@ Typical usage looks like this:
     line => line.replace("PACKAGE", package-import-spec()),
   ),
   ```typ
-  #show: alexandria(prefix: "x-", read: path => read(path))
-  #show: alexandria(prefix: "y-", read: path => read(path))
+  #show: alexandria(prefix: "x:", read: path => read(path))
+  #show: alexandria(prefix: "y:", read: path => read(path))
 
-  ... The text that references @x-quark and @x-netwok ...
+  ... The text that references @x:quark and @x:netwok ...
 
   #bibliographyx(
     "bibliography.bib",
-    prefix: "x-",
+    prefix: "x:",
     title: "X Bibliography",
   )
 
-  ... The section with references to @y-arggh and @y-distress ...
+  ... The section with references to @y:arggh and @y:distress ...
 
   #bibliographyx(
     "bibliography.bib",
-    prefix: "y-",
+    prefix: "y:",
     title: "Y Bibliography",
   )
   ```
@@ -103,19 +103,19 @@ Below we demonstrate how to create separate bibliographies with independent numb
 
 #[
   #import alexandria: *
-  #show: alexandria(prefix: "x-", read: path => read(path))
+  #show: alexandria(prefix: "x:", read: path => read(path))
 
-  For further information on pirate and quark organizations, see #citegroup(prefix: "x-")[@x-arrgh @x-quark].
-  #cite(<x-distress>, form: "author") discusses bibliographical distress.
+  For further information on pirate and quark organizations, see #citegroup(prefix: "x:")[@x:arrgh @x:quark].
+  #cite(<x:distress>, form: "author") discusses bibliographical distress.
 
   #text(lang: "de")[
-    Über den "Netzwok" ist in der Arbeit von #cite(<x-netwok>, form: "prose", style: "ieee") zu lesen.
+    Über den "Netzwok" ist in der Arbeit von #cite(<x:netwok>, form: "prose", style: "ieee") zu lesen.
   ]
 
   #set heading(offset: 3, numbering: none)
   #bibliographyx(
     "bibliography.bib",
-    prefix: "x-",
+    prefix: "x:",
     title: "Bibliography",
     full: true,
     style: "apa",
@@ -126,19 +126,19 @@ Below we demonstrate how to create separate bibliographies with independent numb
 
 #[
   #import alexandria: *
-  #show: alexandria(prefix: "y-", read: path => read(path))
+  #show: alexandria(prefix: "y:", read: path => read(path))
 
-  For further information on pirate and quark organizations, see #citegroup(prefix: "y-")[@y-arrgh @y-quark].
-  #cite(<y-distress>, form: "author") discusses bibliographical distress.
+  For further information on pirate and quark organizations, see #citegroup(prefix: "y:")[@y:arrgh @y:quark].
+  #cite(<y:distress>, form: "author") discusses bibliographical distress.
 
   #text(lang: "de")[
-    Über den "Netzwok" ist in der Arbeit von #cite(<y-netwok>, form: "prose", style: "apa") zu lesen.
+    Über den "Netzwok" ist in der Arbeit von #cite(<y:netwok>, form: "prose", style: "apa") zu lesen.
   ]
 
   #set heading(offset: 3, numbering: none)
   #bibliographyx(
     "bibliography.bib",
-    prefix: "y-",
+    prefix: "y:",
     title: "Bibliography",
     style: "ieee",
   )
@@ -168,15 +168,15 @@ A sample Typst code that separates book references from all other types could lo
     line => line.replace("PACKAGE", package-import-spec()),
   ),
   ```typ
-  #show: alexandria(prefix: "x-", read: path => read(path))
+  #show: alexandria(prefix: "x:", read: path => read(path))
 
-  ... The text that cites entries from "x-" ...
+  ... The text that cites entries from "x:" ...
 
   #load-bibliography("bibliography.bib")
 
   #context {
     // get the bibliography items + additional information
-    let (references: bib-refs, ..bib-info) = get-bibliography("x-")
+    let (references: bib-refs, ..bib-info) = get-bibliography("x:")
 
     // render the non-book bibliography
     render-bibliography(
@@ -209,24 +209,24 @@ It is the result of making the lists non-overlapping to allow citations unambigu
 
 #[
   #import alexandria: *
-  #show: alexandria(prefix: "z-", read: path => read(path))
+  #show: alexandria(prefix: "z:", read: path => read(path))
 
   #load-bibliography(
     "bibliography.bib",
-    prefix: "z-",
+    prefix: "z:",
   )
 
-  For further information on pirate and quark organizations, see #citegroup(prefix: "z-")[@z-arrgh @z-quark].
-  #cite(<z-distress>, form: "author") discusses bibliographical distress in @z-distress,
-  and @z-psychology25 is a hefty volume on various aspects of psychology.
+  For further information on pirate and quark organizations, see #citegroup(prefix: "z:")[@z:arrgh @z:quark].
+  #cite(<z:distress>, form: "author") discusses bibliographical distress in @z:distress,
+  and @z:psychology25 is a hefty volume on various aspects of psychology.
 
   #text(lang: "de")[
-    Über den "Netzwok" ist in der Arbeit von #cite(<z-netwok>, form: "prose", style: "apa") zu lesen.
+    Über den "Netzwok" ist in der Arbeit von #cite(<z:netwok>, form: "prose", style: "apa") zu lesen.
   ]
 
   #set heading(offset: 3, numbering: none)
   #context {
-    let (references: bib-refs, ..bib-info) = get-bibliography("z-")
+    let (references: bib-refs, ..bib-info) = get-bibliography("z:")
 
     render-bibliography(
       title: [Bibliography],

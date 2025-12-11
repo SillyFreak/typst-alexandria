@@ -10,7 +10,7 @@
 #set columns(gutter: 6mm)
 #set par(justify: true)
 
-#show: alexandria(prefix: "x-", read: path => read(path))
+#show: alexandria(prefix: "x:", read: path => read(path))
 
 #let example-table(
   key,
@@ -74,11 +74,11 @@ _APA style citations in English_
 
 _IEEE style citations in German_
 
-#text(lang: "de", example-table(<x-netwok>))
+#text(lang: "de", example-table(<x:netwok>))
 
 _APA style citations in English_
 
-#example-table(<x-netwok>, "normal", "prose", "full", "author", "year", style: "apa", collapsed: citegroup[@x-netwok @x-distress])
+#example-table(<x:netwok>, "normal", "prose", "full", "author", "year", style: "apa", collapsed: citegroup[@x:netwok @x:distress])
 
 #bibliographyx(
   "bibliography.bib",

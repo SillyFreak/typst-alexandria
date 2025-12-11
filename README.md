@@ -11,7 +11,7 @@ To add this package to your project, use this:
 ```typ
 #import "@preview/alexandria:0.2.1": *
 
-#show: alexandria(prefix: "x-", read: path => read(path))
+#show: alexandria(prefix: "x:", read: path => read(path))
 
 ...
 

@@ -44,18 +44,18 @@
 
 #let bib(..args) = bibliography("bibliography.bib", ..args)
 
-#let x-alexandria = alexandria(prefix: "x-", read: path => read(path))
+#let x-alexandria = alexandria(prefix: "x:", read: path => read(path))
 
 #let x-test-citations = [
-  see#citegroup[@x-tolkien54 #cite(<x-distress>, supplement: [a])]
+  see#citegroup[@x:tolkien54 #cite(<x:distress>, supplement: [a])]
 
-  #citations(<x-tolkien54>, <x-distress>)
+  #citations(<x:tolkien54>, <x:distress>)
 ]
 
 #let x-test-citations-no-misc = [
-  see#citegroup[@x-tolkien54 #cite(<x-netwok>, supplement: [a])]
+  see#citegroup[@x:tolkien54 #cite(<x:netwok>, supplement: [a])]
 
-  #citations(<x-tolkien54>, <x-netwok>)
+  #citations(<x:tolkien54>, <x:netwok>)
 ]
 
 #let x-bib(..args) = bibliographyx("bibliography.bib", ..args)
