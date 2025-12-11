@@ -63,9 +63,10 @@ Typical usage looks like this:
 Some known limitations:
 
 - Internally, _Alexandria_ citations are converted to links and are thus affected by `link` rules.
+- Styling links will only affect individual citations within cite groups (collapsed citations), while cite rules would affect the whole group---see #link("https://github.com/SillyFreak/typst-alexandria/issues/24")[issue \#24].
 - Native bibliographies have ```typc numbering: none``` applied to its title, while _Alexandria_'s haven't.
   ```typc show bibliography: set heading(...)``` also won't work on them.
-- Citations that are shown as footnotes are not supported yet -- see #link("https://github.com/SillyFreak/typst-alexandria/issues/11")[issue \#11].
+- Another styling-related difference is that grid-like bibliographies (e.g. IEEE) aren't affected by `show grid` rules in regular Typst, but they are in Alexandria.
 
 If you find additional limitations or other issues, please report them at https://github.com/SillyFreak/typst-alexandria/issues.
 
