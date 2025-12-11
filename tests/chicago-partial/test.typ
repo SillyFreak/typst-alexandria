@@ -4,7 +4,7 @@
 
 #show: x-alexandria
 
-#x-test-citations
+#x-test-citations-no-misc
 
 #x-bib(
   title: "Bibliography",

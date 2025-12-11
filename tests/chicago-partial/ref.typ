@@ -1,6 +1,6 @@
 #import "../test-utils.typ": *
 
-#test-citations
+#test-citations-no-misc
 
 #bib(
   // title: "Bibliography",
