@@ -87,9 +87,11 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
     };
 
     let styles = Arena::new();
+    let mut footnotes = Vec::with_capacity(config.citations.len());
     let mut driver = BibliographyDriver::new();
     for group in config.citations {
         let mut items = Vec::with_capacity(group.len());
+        let mut normal = true;
 
         for citation in &group {
             let Some(entry) = entries.get(&citation.key) else {
@@ -115,6 +117,10 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
                 citation.form.is_none(),
                 citation.form.unwrap_or(None),
             ));
+
+            // comare with https://github.com/typst/typst/blob/v0.14.1/crates/typst-library/src/model/bibliography.rs#L705-L717
+            // `None` (hidden) and `Some(None)` (normal) are considered normal forms
+            normal &= matches!(citation.form, None | Some(None));
         }
 
         let first = group.into_iter().next().ok_or("empty cite group")?;
@@ -134,6 +140,9 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             .transpose()?
             .unwrap_or(&style);
 
+        let footnote = normal && citation_style.settings.class == citationberg::StyleClass::Note;
+        footnotes.push(footnote);
+
         driver.citation(CitationRequest::new(
             items,
             citation_style,
@@ -145,6 +154,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
 
     if config.full {
         for entry in entries.values() {
+            footnotes.push(false);
             driver.citation(CitationRequest::new(
                 vec![CitationItem::new(entry, None, None, true, None)],
                 &style,
@@ -177,7 +187,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
                 .cloned()
                 .expect("key has been found before but not anymore");
 
-            Reference {
+            RenderedReference {
                 key,
                 first_field,
                 content,
@@ -185,10 +195,17 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             }
         })
         .collect();
+
+    assert_eq!(rendered.citations.len(), footnotes.len());
     let citations = rendered
         .citations
         .into_iter()
-        .map(|item| item.citation)
+        .zip(footnotes)
+        .map(|(item, footnote)| {
+            let content = item.citation;
+
+            RenderedCitation { footnote, content }
+        })
         .collect();
 
     let hanging_indent = rendered_bib.hanging_indent;

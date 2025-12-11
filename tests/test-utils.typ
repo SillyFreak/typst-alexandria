@@ -36,6 +36,12 @@
   #citations(<tolkien54>, <distress>)
 ]
 
+#let test-citations-no-misc = [
+  see@tolkien54 #cite(<netwok>, supplement: [a])
+
+  #citations(<tolkien54>, <netwok>)
+]
+
 #let bib(..args) = bibliography("bibliography.bib", ..args)
 
 #let x-alexandria = alexandria(prefix: "x-", read: path => read(path))
@@ -44,6 +50,12 @@
   see#citegroup[@x-tolkien54 #cite(<x-distress>, supplement: [a])]
 
   #citations(<x-tolkien54>, <x-distress>)
+]
+
+#let x-test-citations-no-misc = [
+  see#citegroup[@x-tolkien54 #cite(<x-netwok>, supplement: [a])]
+
+  #citations(<x-tolkien54>, <x-netwok>)
 ]
 
 #let x-bib(..args) = bibliographyx("bibliography.bib", ..args)
