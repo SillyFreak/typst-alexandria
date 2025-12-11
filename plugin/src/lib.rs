@@ -27,8 +27,7 @@ wasm_minimal_protocol::initiate_protocol!();
 pub fn names() -> Result<Vec<u8>, String> {
     let names = ArchivedStyle::all()
         .iter()
-        .map(|style| style.names().into_iter().copied())
-        .flatten()
+        .flat_map(|style| style.names().iter().copied())
         .collect::<Vec<_>>();
     let output = cbor_encode(&names).map_err_to_string()?;
     Ok(output)
@@ -125,7 +124,7 @@ fn read_impl(config: Config) -> Result<Bibliography, String> {
             .as_ref()
             .map(|style| {
                 let style =
-                    ArchivedStyle::by_name(&style).ok_or(format!("Unknown style: {}", style))?;
+                    ArchivedStyle::by_name(style).ok_or(format!("Unknown style: {}", style))?;
                 let citationberg::Style::Independent(style) = style.get() else {
                     return Err("style is not an IndependentStyle".to_string());
                 };

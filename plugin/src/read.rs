@@ -27,7 +27,7 @@ pub fn decode_library(source: &Resource) -> Result<Library, String> {
             }
             "bib" => hayagriva::io::from_biblatex_str(data)
                 .map_err(|err| format_biblatex_error(Some(path), data, err)),
-            _ => return Err("unknown bibliography format (must be .yaml/.yml or .bib)".to_string()),
+            _ => Err("unknown bibliography format (must be .yaml/.yml or .bib)".to_string()),
         }
     } else {
         // If we just got bytes, we need to guess. If it can be decoded as
