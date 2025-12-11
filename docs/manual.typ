@@ -9,7 +9,7 @@
   subtitle: [
     _Alexandria_ allows a single document to have multiple bibliographies.
   ],
-  date: datetime(year: 2025, month: 7, day: 8),
+  date: datetime(year: 2025, month: 12, day: 12),
 
   // logo: rect(width: 5cm, height: 5cm),
   // abstract: [
