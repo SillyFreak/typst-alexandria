@@ -9,7 +9,7 @@ This package currently has a few limitations, mostly around how styling applies 
 To add this package to your project, use this:
 
 ```typ
-#import "@preview/alexandria:0.2.1": *
+#import "@preview/alexandria:0.2.2": *
 
 #show: alexandria(prefix: "x:", read: path => read(path))
 
