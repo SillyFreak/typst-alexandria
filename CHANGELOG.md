@@ -26,6 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+## [0.2.2] - 2025-12-12
+
+### Added
+- Math markup embedded in references is now rendered correctly
+- Alexandria now supports footnote bibliography styles
+
+### Changed
+- Improvements in the manual thanks to [alyst](https://github.com/alyst/)
+- Update the Hayagriva version used by the plugin from 0.8.1 to 0.9.1, fixing various bugs and bringing Alexandria in line with Typst 0.14.
+  - Automated tests no longer run on 0.12 and 0.13 since bugfixes between Hayagriva 0.8 and 0.9 mean that older Typst and new Alexandria no longer match exactly. Alexandria should still be compatible with Typst 0.12+.
+- Errors while parsing a bibliography file now contain more detailed information on the location of the error. The messages are in line with what the native bibliography reports, except that the error is reported inside the package, not in the bibliography file.
+
 ## [0.2.1] - 2025-07-08
 
 ### Changed
@@ -87,7 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for IEEE and APA references in English and German (APA tests are deactivated to to something that's probably a Typst bug)
 
 
-[Unreleased]: https://github.com/SillyFreak/typst-alexandria/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/SillyFreak/typst-alexandria/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.2.2
 [0.2.1]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.2.1
 [0.2.0]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.2.0
 [0.1.3]: https://github.com/SillyFreak/typst-alexandria/releases/tag/v0.1.3
